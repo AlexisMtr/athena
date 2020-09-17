@@ -14,14 +14,16 @@ namespace Athena.Services
         private readonly PoolService poolService;
         private readonly AlarmService alarmService;
         private readonly TelemetryService telemetryService;
+        private readonly IMapper mapper;
         private readonly ILogger log;
         private readonly double batteryLevelAlarm;
 
-        public ProcessDataService(PoolService poolService, AlarmService alarmService, TelemetryService telemetryService, ILogger log)
+        public ProcessDataService(PoolService poolService, AlarmService alarmService, TelemetryService telemetryService, IMapper mapper, ILogger log)
         {
             this.poolService = poolService;
             this.alarmService = alarmService;
             this.telemetryService = telemetryService;
+            this.mapper = mapper;
             this.log = log;
             this.batteryLevelAlarm = double.Parse(Environment.GetEnvironmentVariable("BatteryLevelAlarm"));
         }
@@ -37,7 +39,7 @@ namespace Athena.Services
                 throw new Exception($"Pool not found");
             }
 
-            IEnumerable<Telemetry> telemetries = Mapper.Map<IEnumerable<Telemetry>>(data.Telemetries);
+            IEnumerable<Telemetry> telemetries = mapper.Map<IEnumerable<Telemetry>>(data.Telemetries);
             foreach(Telemetry telemetry in telemetries)
             {
                 ProcessTelemetry(telemetry, pool);

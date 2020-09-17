@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Athena.Configuration;
 using Athena.Dtos;
 using Athena.Models;
 using Athena.Services;
@@ -16,30 +14,23 @@ using System.Threading.Tasks;
 
 namespace Athena
 {
-    public static class TelemetriesFunction
+    public class TelemetriesFunction
     {
+        private readonly ProcessDataService dataService;
+        private readonly DeviceConfigurationService deviceConfigurationService;
+
+        public TelemetriesFunction(ProcessDataService dataService, DeviceConfigurationService deviceConfigurationService)
+        {
+            this.dataService = dataService;
+            this.deviceConfigurationService = deviceConfigurationService;
+        }
+
         [FunctionName("Telemetries")]
-        public static async Task<IActionResult> Run(
+        public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "Telemetries/{deviceId}")]HttpRequest req,
             string deviceId,
             ILogger log)
         {
-            ProcessDataService service;
-            DeviceConfigurationService deviceConfigurationService;
-            try
-            {
-                MapperConfiguration.ConfigureMapper();
-                DependencyInjection.InitializeContainer(log);
-
-                service = DependencyInjection.ServiceProvider.GetRequiredService<ProcessDataService>();
-                deviceConfigurationService = DependencyInjection.ServiceProvider.GetRequiredService<DeviceConfigurationService>();
-            }
-            catch (Exception e)
-            {
-                log.LogError(e.Message, e);
-                return new StatusCodeResult((int)HttpStatusCode.InternalServerError);
-            }
-
             string requestBody = string.Empty;
             using (var sr = new StreamReader(req.Body))
             {
@@ -49,12 +40,12 @@ namespace Athena
 
             try
             {
-                service.Process(deviceId, payload);
+                dataService.Process(deviceId, payload);
                 DeviceConfiguration configuration = deviceConfigurationService.GetDeviceConfiguration(deviceId);
 
                 IActionResult result  = configuration.IsPublished && !req.Query.ContainsKey("getConfiguration") ? 
                     new StatusCodeResult((int)HttpStatusCode.NotModified) as IActionResult :
-                    new OkObjectResult(new { publicationDelay = configuration.PublicationDelay.TotalSeconds }) as IActionResult;
+                    new OkObjectResult(new { publicationDelay = configuration.PublicationDelay.TotalSeconds });
 
                 if(!deviceConfigurationService.SetAsPublished(configuration))
                 {

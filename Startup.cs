@@ -29,7 +29,6 @@ namespace Athena
                 => opt.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<IPoolRepository, PoolRepository>();
-            builder.Services.AddScoped<IAlarmRepository, AlarmRepository>();
             builder.Services.AddScoped<ITelemetryRepository, TelemetryRepository>();
             builder.Services.AddScoped<IDeviceConfigurationRepository, DeviceConfigurationRepository>();
 

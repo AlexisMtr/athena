@@ -68,8 +68,8 @@ namespace Athena
 
         [FunctionName("TelemetriesEvent")]
         public async Task RunEvent(
-            [EventHubTrigger("%eventSubscribe%", Connection = "EventSubscribeConnectionString")]EventData[] events,
-            [EventHub("%eventPublish%", Connection = "EventPublishConnectionString")] IAsyncCollector<string> outputEvents)
+            [EventHubTrigger("%EventSubscribe%", Connection = "EventSubscribeConnectionString")]EventData[] events,
+            [EventHub("%EventPublish%", Connection = "EventPublishConnectionString")] IAsyncCollector<string> outputEvents)
         {
             var exceptions = new List<Exception>();
 

@@ -34,7 +34,6 @@ namespace Athena
             builder.Services.AddScoped<IDeviceConfigurationRepository, DeviceConfigurationRepository>();
 
             builder.Services.AddScoped<PoolService>();
-            builder.Services.AddScoped<AlarmService>();
             builder.Services.AddScoped<TelemetryService>();
             builder.Services.AddScoped<DeviceConfigurationService>();
             builder.Services.AddScoped<ProcessDataService>();

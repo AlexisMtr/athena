@@ -42,6 +42,7 @@ namespace Athena
             builder.Services.AddAutoMapper(conf =>
             {
                 conf.AddProfile<TelemetryProfile>();
+                conf.AddProfile<DeviceConfigurationProfile>();
             });
         }
     }

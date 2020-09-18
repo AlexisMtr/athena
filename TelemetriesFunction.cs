@@ -11,6 +11,11 @@ using System;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Azure.EventHubs;
+using System.Collections.Generic;
+using System.Text;
+using System.Linq;
+using AutoMapper;
 
 namespace Athena
 {
@@ -18,18 +23,20 @@ namespace Athena
     {
         private readonly ProcessDataService dataService;
         private readonly DeviceConfigurationService deviceConfigurationService;
+        private readonly IMapper mapper;
+        private readonly ILogger log;
 
-        public TelemetriesFunction(ProcessDataService dataService, DeviceConfigurationService deviceConfigurationService)
+        public TelemetriesFunction(ProcessDataService dataService, DeviceConfigurationService deviceConfigurationService, IMapper mapper, ILogger log)
         {
             this.dataService = dataService;
             this.deviceConfigurationService = deviceConfigurationService;
+            this.mapper = mapper;
+            this.log = log;
         }
 
-        [FunctionName("Telemetries")]
-        public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "Telemetries/{deviceId}")]HttpRequest req,
-            string deviceId,
-            ILogger log)
+        [FunctionName("TelemetriesHttp")]
+        public async Task<IActionResult> RunHttp(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "telemetries")]HttpRequest req)
         {
             string requestBody = string.Empty;
             using (var sr = new StreamReader(req.Body))
@@ -40,30 +47,79 @@ namespace Athena
 
             try
             {
-                dataService.Process(deviceId, payload);
+                DeviceConfiguration deviceConfiguration = Process(payload.DeviceId, payload);
+
+                IActionResult result = deviceConfiguration.IsPublished ?
+                    new StatusCodeResult((int)HttpStatusCode.NotModified) as IActionResult :
+                    new OkObjectResult(new { publicationDelay = deviceConfiguration.PublicationDelay.TotalSeconds });
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    Message = "Error while processing telemetries",
+                    InnerMessage = e.Message
+                });
+            }
+        }
+
+
+        [FunctionName("TelemetriesEvent")]
+        public async Task RunEvent(
+            [EventHubTrigger("%eventSubscribe%", Connection = "EventSubscribeConnectionString")]EventData[] events,
+            [EventHub("%eventPublish%", Connection = "EventPublishConnectionString")] IAsyncCollector<string> outputEvents)
+        {
+            var exceptions = new List<Exception>();
+
+            foreach (EventData eventData in events)
+            {
+                try
+                {
+                    string requestBody = Encoding.UTF8.GetString(eventData.Body.Array, eventData.Body.Offset, eventData.Body.Count);
+                    TelemetriesSetDto payload = JsonConvert.DeserializeObject<TelemetriesSetDto>(requestBody);
+
+                    DeviceConfiguration deviceConfiguration = Process(payload.DeviceId, payload);
+
+                    if (!deviceConfiguration.IsPublished)
+                    {
+                        await outputEvents.AddAsync(JsonConvert.SerializeObject(mapper.Map<DeviceConfigurationDto>(deviceConfiguration)));
+                    }
+                }
+                catch (Exception e)
+                {
+                    exceptions.Add(e);
+                }
+            }
+
+            if (exceptions.Count > 1)
+                throw new AggregateException(exceptions);
+
+            if (exceptions.Count == 1)
+                throw exceptions.Single();
+        }
+
+        private DeviceConfiguration Process(string deviceId, TelemetriesSetDto data)
+        {
+            try
+            {
+                dataService.Process(deviceId, data);
                 DeviceConfiguration configuration = deviceConfigurationService.GetDeviceConfiguration(deviceId);
 
-                IActionResult result  = configuration.IsPublished && !req.Query.ContainsKey("getConfiguration") ? 
-                    new StatusCodeResult((int)HttpStatusCode.NotModified) as IActionResult :
-                    new OkObjectResult(new { publicationDelay = configuration.PublicationDelay.TotalSeconds });
-
-                if(!deviceConfigurationService.SetAsPublished(configuration))
+                if (!deviceConfigurationService.SetAsPublished(configuration))
                 {
                     log.LogWarning($"DeviceConfiguration {configuration.Id} is published but stay as 'unpublished' in the database");
                 }
 
                 log.LogInformation($"{DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm} - Telemetries updated for device {deviceId}");
 
-                return result;
+                return configuration;
             }
             catch (Exception e)
             {
                 log.LogError(e.Message, e);
-                return new BadRequestObjectResult(new
-                {
-                    Message = "Error while processing telemetries",
-                    InnerMessage = e.Message
-                });
+                throw;
             }
         }
     }

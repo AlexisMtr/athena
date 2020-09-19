@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Athena": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "httpPort": 34693,
+      "useSSL": false
+    }
+  }
+}

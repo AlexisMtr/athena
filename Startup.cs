@@ -8,6 +8,7 @@ using Athena.Repositories.SQL;
 using Athena.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 [assembly: FunctionsStartup(typeof(Athena.Startup))]
 namespace Athena
@@ -16,17 +17,20 @@ namespace Athena
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            builder.Services.AddLogging();
+            builder.Services.AddLogging(c => c.SetMinimumLevel(LogLevel.Information));
 
             IConfiguration configuration = new ConfigurationBuilder()
                 .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
+                .AddUserSecrets<Startup>()
                 .AddEnvironmentVariables()
                 .Build();
 
             builder.Services.AddSingleton(configuration);
 
-            builder.Services.AddDbContext<AthenaContext>(opt 
+            builder.Services.AddDbContext<AthenaContext>(opt
                 => opt.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            // or 
+            //  => opt.UseInMemoryDatabase(databaseName: "poseidon"));
 
             builder.Services.AddScoped<IPoolRepository, PoolRepository>();
             builder.Services.AddScoped<ITelemetryRepository, TelemetryRepository>();

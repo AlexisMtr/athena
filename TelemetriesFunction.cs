@@ -24,9 +24,9 @@ namespace Athena
         private readonly ProcessDataService dataService;
         private readonly DeviceConfigurationService deviceConfigurationService;
         private readonly IMapper mapper;
-        private readonly ILogger log;
+        private readonly ILogger<TelemetriesFunction> log;
 
-        public TelemetriesFunction(ProcessDataService dataService, DeviceConfigurationService deviceConfigurationService, IMapper mapper, ILogger log)
+        public TelemetriesFunction(ProcessDataService dataService, DeviceConfigurationService deviceConfigurationService, IMapper mapper, ILogger<TelemetriesFunction> log)
         {
             this.dataService = dataService;
             this.deviceConfigurationService = deviceConfigurationService;
@@ -36,7 +36,7 @@ namespace Athena
 
         [FunctionName("TelemetriesHttp")]
         public async Task<IActionResult> RunHttp(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "telemetries")]HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "telemetries")] HttpRequest req)
         {
             string requestBody = string.Empty;
             using (var sr = new StreamReader(req.Body))
@@ -68,7 +68,7 @@ namespace Athena
 
         [FunctionName("TelemetriesEvent")]
         public async Task RunEvent(
-            [EventHubTrigger("%EventSubscribe%", Connection = "EventSubscribeConnectionString")]EventData[] events,
+            [EventHubTrigger("%EventSubscribe%", Connection = "EventSubscribeConnectionString")] EventData[] events,
             [EventHub("%EventPublish%", Connection = "EventPublishConnectionString")] IAsyncCollector<string> outputEvents)
         {
             var exceptions = new List<Exception>();
@@ -90,6 +90,7 @@ namespace Athena
                 catch (Exception e)
                 {
                     exceptions.Add(e);
+                    log.LogInformation(e.Message, e);
                 }
             }
 

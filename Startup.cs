@@ -21,6 +21,7 @@ namespace Athena
 
             IConfiguration configuration = new ConfigurationBuilder()
                 .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
+                .AddUserSecrets<Startup>()
                 .AddEnvironmentVariables()
                 .Build();
 

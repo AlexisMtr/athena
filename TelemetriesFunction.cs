@@ -90,7 +90,6 @@ namespace Athena
                 catch (Exception e)
                 {
                     exceptions.Add(e);
-                    log.LogInformation(e.Message, e);
                 }
             }
 

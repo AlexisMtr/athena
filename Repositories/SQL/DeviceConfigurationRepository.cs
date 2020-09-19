@@ -26,7 +26,7 @@ namespace Athena.Repositories.SQL
         {
             return context.Devices
                 .Include(e => e.Configuration)
-                .FirstOrDefault(e => e.DeviceId.Equals(deviceId)).Configuration;
+                .FirstOrDefault(e => e.DeviceId.Equals(deviceId))?.Configuration;
         }
 
         public void SaveChanges()

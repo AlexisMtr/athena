@@ -36,7 +36,8 @@ namespace Athena
 
         [FunctionName("TelemetriesHttp")]
         public async Task<IActionResult> RunHttp(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "telemetries")] HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "telemetries")] HttpRequest req,
+            [EventHub("%EventPublish%", Connection = "EventPublishConnectionString")] IAsyncCollector<string> outputEvents)
         {
             string requestBody = string.Empty;
             using (var sr = new StreamReader(req.Body))
@@ -47,11 +48,13 @@ namespace Athena
 
             try
             {
-                DeviceConfiguration deviceConfiguration = Process(payload.DeviceId, payload);
+                TelemetryForwardDto data = Process(payload.DeviceId, payload);
 
-                IActionResult result = deviceConfiguration.IsPublished ?
+                IActionResult result = data.Configuration.IsPublished ?
                     new StatusCodeResult((int)HttpStatusCode.NotModified) as IActionResult :
-                    new OkObjectResult(new { publicationDelay = deviceConfiguration.PublicationDelay.TotalSeconds });
+                    new OkObjectResult(new { publicationDelay = data.Configuration.PublicationDelay });
+
+                await outputEvents.AddAsync(JsonConvert.SerializeObject(data));
 
                 return result;
             }
@@ -80,11 +83,12 @@ namespace Athena
                     string requestBody = Encoding.UTF8.GetString(eventData.Body.Array, eventData.Body.Offset, eventData.Body.Count);
                     TelemetriesSetDto payload = JsonConvert.DeserializeObject<TelemetriesSetDto>(requestBody);
 
-                    DeviceConfiguration deviceConfiguration = Process(payload.DeviceId, payload);
+                    TelemetryForwardDto data = Process(payload.DeviceId, payload);
+                    await outputEvents.AddAsync(JsonConvert.SerializeObject(data));
 
-                    if (!deviceConfiguration.IsPublished)
+                    if (data.Configuration != null && !data.Configuration.IsPublished)
                     {
-                        await outputEvents.AddAsync(JsonConvert.SerializeObject(mapper.Map<DeviceConfigurationDto>(deviceConfiguration)));
+                        // TODO: forward configuration to sender
                     }
                 }
                 catch (Exception e)
@@ -100,21 +104,22 @@ namespace Athena
                 throw exceptions.Single();
         }
 
-        private DeviceConfiguration Process(string deviceId, TelemetriesSetDto data)
+        private TelemetryForwardDto Process(string deviceId, TelemetriesSetDto data)
         {
             try
             {
-                dataService.Process(deviceId, data);
+                IEnumerable<Telemetry> telemetries = mapper.Map<IEnumerable<Telemetry>>(data.Telemetries);
+                Pool pool = this.dataService.Process(deviceId, telemetries);
                 DeviceConfiguration configuration = deviceConfigurationService.GetDeviceConfiguration(deviceId);
 
-                if (!deviceConfigurationService.SetAsPublished(configuration))
+                if (configuration != null && !deviceConfigurationService.SetAsPublished(configuration))
                 {
                     log.LogWarning($"DeviceConfiguration {configuration.Id} is published but stay as 'unpublished' in the database");
                 }
 
                 log.LogInformation($"{DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm} - Telemetries updated for device {deviceId}");
 
-                return configuration;
+                return mapper.Map<TelemetryForwardDto>((pool, telemetries, configuration));
             }
             catch (Exception e)
             {

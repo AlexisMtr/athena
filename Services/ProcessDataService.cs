@@ -1,5 +1,4 @@
 ﻿using Athena.Models;
-using Athena.Dtos;
 using System.Collections.Generic;
 using System;
 using AutoMapper;
@@ -23,9 +22,9 @@ namespace Athena.Services
             this.log = log;
         }
 
-        public void Process(string deviceId, TelemetriesSetDto data)
+        public Pool Process(string deviceId, IEnumerable<Telemetry> telemetries)
         {
-            if (!data.Telemetries.Any()) return;
+            if (!telemetries.Any()) return null;
 
             Pool pool = poolService.GetByDeviceId(deviceId);
             if (pool == null)
@@ -33,14 +32,14 @@ namespace Athena.Services
                 log.LogError($"No pool associated to device {deviceId}");
                 throw new Exception($"Pool not found");
             }
-
-            IEnumerable<Telemetry> telemetries = mapper.Map<IEnumerable<Telemetry>>(data.Telemetries);
             foreach(Telemetry telemetry in telemetries)
             {
                 telemetry.Pool = pool;
                 telemetry.DateTime = DateTimeOffset.UtcNow;
                 telemetryService.Add(telemetry);
             }
+
+            return pool;
         }
     }
 }

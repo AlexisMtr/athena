@@ -1,5 +1,6 @@
 ﻿using Athena.Models;
 using Athena.Repositories;
+using Microsoft.Azure.Documents;
 
 namespace Athena.Services
 {
@@ -19,6 +20,8 @@ namespace Athena.Services
 
         public bool SetAsPublished(DeviceConfiguration configuration)
         {
+            if (configuration == null) return false;
+
             configuration.IsPublished = true;
             deviceConfigurationRepository.SaveChanges();
 

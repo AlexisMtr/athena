@@ -1,7 +1,6 @@
 ﻿using Athena.Models;
 using System.Collections.Generic;
 using System;
-using AutoMapper;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 
@@ -11,14 +10,12 @@ namespace Athena.Services
     {
         private readonly PoolService poolService;
         private readonly TelemetryService telemetryService;
-        private readonly IMapper mapper;
-        private readonly ILogger log;
+        private readonly ILogger<ProcessDataService> log;
 
-        public ProcessDataService(PoolService poolService, TelemetryService telemetryService, IMapper mapper, ILogger log)
+        public ProcessDataService(PoolService poolService, TelemetryService telemetryService, ILogger<ProcessDataService> log)
         {
             this.poolService = poolService;
             this.telemetryService = telemetryService;
-            this.mapper = mapper;
             this.log = log;
         }
 

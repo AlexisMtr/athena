@@ -9,6 +9,7 @@ using Athena.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
 
 [assembly: FunctionsStartup(typeof(Athena.Startup))]
 namespace Athena
@@ -17,11 +18,16 @@ namespace Athena
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            builder.Services.AddLogging(c => c.SetMinimumLevel(LogLevel.Information));
+            builder.Services.AddLogging(c =>
+            {
+                c.SetMinimumLevel(LogLevel.Information);
+                c.AddFilter(nameof(Athena), LogLevel.Trace);
+            });
 
             IConfiguration configuration = new ConfigurationBuilder()
+                .SetBasePath(Environment.CurrentDirectory)
                 .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
-                .AddUserSecrets<Startup>()
+                .AddUserSecrets<Startup>(optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
 

@@ -4,7 +4,7 @@ Athena is a component of project Poseidon (a connected swimming pool system)
 It's responsible to store and dispatch every incoming telemetries to other services of the solution in addition to forwarding device's configuration to the telemetry's sender
 
 ## Settings
-In `user-secret` file or `local.settings.json`
+In `local.settings.json`
 ```json
 {
   "IsEncrypted": false,

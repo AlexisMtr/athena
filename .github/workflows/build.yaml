@@ -1,0 +1,95 @@
+name: Push docker image
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+    paths-ignore:
+    - '.devcontainer/**'
+    - '.github/CODEOWNERS'
+    - 'README.md'
+    - 'docs/*'
+    branches:
+    - main
+  push:
+    paths-ignore:
+    - '.devcontainer/**'
+    - '.github/CODEOWNERS'
+    - 'README.md'
+    - 'docs/*'
+    branches:
+    - "main"
+  release:
+    types:
+    - created
+
+jobs:
+  code_quality:
+    name: Code Qaulity
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v1
+      with:
+        path: ~\sonar\cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+    - name: Cache SonarCloud scanner
+      id: cache-sonar-scanner
+      uses: actions/cache@v1
+      with:
+        path: .\.sonar\scanner
+        key: ${{ runner.os }}-sonar-scanner
+        restore-keys: ${{ runner.os }}-sonar-scanner
+    - name: Install SonarCloud scanner
+      if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+      shell: powershell
+      run: |
+        New-Item -Path .\.sonar\scanner -ItemType Directory
+        dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+    - name: Build and analyze
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      shell: powershell
+      run: |
+        .\.sonar\scanner\dotnet-sonarscanner begin /k:"AlexisMtr_athena" /o:"alexismtr-github" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
+        dotnet publish Athena.sln
+        .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+
+  build:
+    needs: code_quality
+    name: Build .NET App
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+    - name: Setup .NETCore 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x' # SDK Version to use; x will use the latest version of the 3.1 channel
+    - name: Build Artifact
+      run: dotnet publish Athena.csproj -c Release -o ./app/publish
+    - name: Publish Build Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: athena-artifact
+        path: ./app/publish
+
+  docker_push:
+    needs: code_quality
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+    - name: Push to Docker Hub
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: alexismtr/athena
+        tag_with_ref: true
+        add_git_labels: true

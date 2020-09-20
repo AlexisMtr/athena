@@ -48,7 +48,7 @@ namespace Athena
 
             try
             {
-                TelemetryForwardDto data = Process(payload.DeviceId, payload);
+                TelemetryDispatchDto data = Process(payload.DeviceId, payload);
 
                 IActionResult result = data.Configuration.IsPublished ?
                     new StatusCodeResult((int)HttpStatusCode.NotModified) as IActionResult :
@@ -83,7 +83,7 @@ namespace Athena
                     string requestBody = Encoding.UTF8.GetString(eventData.Body.Array, eventData.Body.Offset, eventData.Body.Count);
                     TelemetriesSetDto payload = JsonConvert.DeserializeObject<TelemetriesSetDto>(requestBody);
 
-                    TelemetryForwardDto data = Process(payload.DeviceId, payload);
+                    TelemetryDispatchDto data = Process(payload.DeviceId, payload);
                     await outputEvents.AddAsync(JsonConvert.SerializeObject(data));
 
                     if (data.Configuration != null && !data.Configuration.IsPublished)
@@ -104,7 +104,7 @@ namespace Athena
                 throw exceptions.Single();
         }
 
-        private TelemetryForwardDto Process(string deviceId, TelemetriesSetDto data)
+        private TelemetryDispatchDto Process(string deviceId, TelemetriesSetDto data)
         {
             try
             {
@@ -119,7 +119,7 @@ namespace Athena
 
                 log.LogInformation($"{DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm} - Telemetries updated for device {deviceId}");
 
-                return mapper.Map<TelemetryForwardDto>((pool, telemetries, configuration));
+                return mapper.Map<TelemetryDispatchDto>((pool, telemetries, configuration));
             }
             catch (Exception e)
             {

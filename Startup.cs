@@ -52,7 +52,7 @@ namespace Athena
                 conf.AddProfile<TelemetryProfile>();
                 conf.AddProfile<PoolProfile>();
                 conf.AddProfile<DeviceConfigurationProfile>();
-                conf.AddProfile<TelemetryForwardProfile>();
+                conf.AddProfile<TelemetryDispatchProfile>();
             });
         }
     }

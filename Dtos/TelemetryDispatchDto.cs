@@ -2,7 +2,7 @@
 
 namespace Athena.Dtos
 {
-    public class TelemetryForwardDto
+    public class TelemetryDispatchDto
     {
         public IEnumerable<TelemetryDto> Telemetries { get; set; }
         public PoolDto Pool { get; set; }

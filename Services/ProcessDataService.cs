@@ -31,12 +31,23 @@ namespace Athena.Services
             }
             foreach(Telemetry telemetry in telemetries)
             {
+                Round(telemetry);
                 telemetry.Pool = pool;
                 telemetry.DateTime = DateTimeOffset.UtcNow;
                 telemetryService.Add(telemetry);
             }
 
             return pool;
+        }
+
+        private void Round(Telemetry telemetry)
+        {
+            var roundTo = telemetry.Type switch
+            {
+                TelemetryType.Ph => 0,
+                _ => 2,
+            };
+            telemetry.Value = Math.Round(telemetry.Value, roundTo);
         }
     }
 }

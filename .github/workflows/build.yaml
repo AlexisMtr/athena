@@ -71,12 +71,12 @@ jobs:
       with:
         dotnet-version: '3.1.x' # SDK Version to use; x will use the latest version of the 3.1 channel
     - name: Build Artifact
-      run: dotnet publish Athena.csproj -c Release -o /app/publish
+      run: dotnet publish Athena.csproj -c Release -o ./app/publish
     - name: Publish Build Artifact
       uses: actions/upload-artifact@v2
       with:
         name: athena-artifact
-        path: /app/publish
+        path: ./app/publish
 
   docker_push:
     needs: code_quality

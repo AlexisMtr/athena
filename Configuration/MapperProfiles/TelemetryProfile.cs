@@ -10,6 +10,7 @@ namespace Athena.Configuration.MapperProfiles
         {
             CreateMap<TelemetryDto, Telemetry>()
                 .ForMember(d => d.Pool, opt => opt.Ignore());
+            CreateMap<Telemetry, TelemetryDto>();
         }
     }
 }

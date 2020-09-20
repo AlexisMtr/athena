@@ -1,8 +1,6 @@
 ﻿using Athena.Models;
-using Athena.Dtos;
 using System.Collections.Generic;
 using System;
-using AutoMapper;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 
@@ -12,20 +10,18 @@ namespace Athena.Services
     {
         private readonly PoolService poolService;
         private readonly TelemetryService telemetryService;
-        private readonly IMapper mapper;
-        private readonly ILogger log;
+        private readonly ILogger<ProcessDataService> log;
 
-        public ProcessDataService(PoolService poolService, TelemetryService telemetryService, IMapper mapper, ILogger log)
+        public ProcessDataService(PoolService poolService, TelemetryService telemetryService, ILogger<ProcessDataService> log)
         {
             this.poolService = poolService;
             this.telemetryService = telemetryService;
-            this.mapper = mapper;
             this.log = log;
         }
 
-        public void Process(string deviceId, TelemetriesSetDto data)
+        public Pool Process(string deviceId, IEnumerable<Telemetry> telemetries)
         {
-            if (!data.Telemetries.Any()) return;
+            if (!telemetries.Any()) return null;
 
             Pool pool = poolService.GetByDeviceId(deviceId);
             if (pool == null)
@@ -33,14 +29,25 @@ namespace Athena.Services
                 log.LogError($"No pool associated to device {deviceId}");
                 throw new Exception($"Pool not found");
             }
-
-            IEnumerable<Telemetry> telemetries = mapper.Map<IEnumerable<Telemetry>>(data.Telemetries);
             foreach(Telemetry telemetry in telemetries)
             {
+                Round(telemetry);
                 telemetry.Pool = pool;
                 telemetry.DateTime = DateTimeOffset.UtcNow;
                 telemetryService.Add(telemetry);
             }
+
+            return pool;
+        }
+
+        private void Round(Telemetry telemetry)
+        {
+            var roundTo = telemetry.Type switch
+            {
+                TelemetryType.Ph => 0,
+                _ => 2,
+            };
+            telemetry.Value = Math.Round(telemetry.Value, roundTo);
         }
     }
 }

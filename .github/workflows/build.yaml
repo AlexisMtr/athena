@@ -1,4 +1,4 @@
-name: Push docker image
+name: Build App
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
     paths-ignore:
     - '.devcontainer/**'
     - '.github/CODEOWNERS'
+    - '.infra-as-code/**'
     - 'README.md'
     - 'docs/*'
     branches:
@@ -14,6 +15,7 @@ on:
     paths-ignore:
     - '.devcontainer/**'
     - '.github/CODEOWNERS'
+    - '.infra-as-code/**'
     - 'README.md'
     - 'docs/*'
     branches:

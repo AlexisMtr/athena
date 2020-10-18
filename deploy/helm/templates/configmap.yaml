@@ -1,0 +1,15 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ printf "%s-%s" (include "athena.name" .) "env" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "athena.name" . }}
+    helm.sh/chart: {{ include "athena.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  {{- range $index, $value := .Values.environments}}
+    {{$index}}: "{{ $value }}" 
+  {{- end}}
+  

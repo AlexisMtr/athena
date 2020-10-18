@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "athena.fullname" . }}
+  labels:
+    {{- include "athena.labels" . | nindent 4 }}
+spec:
+{{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "athena.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 6 }}
+    {{- end }}
+      labels:
+        {{- include "athena.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      serviceAccountName: {{ include "athena.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: {{ printf "%s-%s" ( include "athena.name" .) "env"}}
+        env:
+        - name: AzureWebJobsStorage
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
+              key: azure_storage
+        - name: AzureWebJobsDashboard
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
+              key: azure_storage
+        - name: EventSubscribeConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
+              key: EventSubscribeConnectionString
+        - name: EventPublishConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
+              key: EventPublishConnectionString
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
+              key: DbConnectionString
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}

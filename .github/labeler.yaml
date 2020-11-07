@@ -1,0 +1,10 @@
+helm-chart:
+- deploy/helm/**/*
+azure-terraform:
+- deploy/infra-as-code/azure-tf/**/*
+azure-arm:
+- deploy/infra-as-code/azure-arm/**/*
+source:
+- './*'
+- '!deploy/**/*'
+- '!.github/**/*'

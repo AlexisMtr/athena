@@ -1,4 +1,4 @@
-name: Build App
+name: Athena Actions
 
 on:
   pull_request:
@@ -19,10 +19,7 @@ on:
     - 'README.md'
     - 'docs/*'
     branches:
-    - "main"
-  release:
-    types:
-    - created
+    - main
 
 jobs:
   code_quality:
@@ -73,7 +70,13 @@ jobs:
       with:
         dotnet-version: '3.1.x' # SDK Version to use; x will use the latest version of the 3.1 channel
     - name: Build Artifact
-      run: dotnet publish Athena.csproj -c Release -o ./app/publish
+      run: |
+        configuration=Release
+        if [ ${{ github.action }} == 'pull_request'];
+        then
+          configuration=Debug
+        fi
+        dotnet publish Athena.csproj -c $configuration -o ./app/publish
     - name: Publish Build Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -95,3 +98,41 @@ jobs:
         repository: alexismtr/athena
         tag_with_ref: true
         add_git_labels: true
+
+  semantic_version:
+    name: Compute next version
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: paulhatch/semantic-version@v3
+      id: semver
+      name: Compute SemVer
+      with:
+        branch: "main"
+        tag_prefix: "v"
+        major_pattern: "BREAKING CHANGES"
+        minor_pattern: "feature"
+        format: "${major}.${minor}.${patch}"
+    - name: Comment PR
+      uses: thollander/actions-comment-pull-request@master
+      with:
+        message: "### 👷🏻‍♂️ Next Athena version will be **${{ steps.semver.outputs.version}}**\ndon't worry, Github Action will take care of all of this for you once this PR will be merged 🧘🏻‍♀️"
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Update Version, tag and push
+      if: github.event_name != 'pull_request'
+      run: |
+        sed -i 's/<Version>.*<\/Version>/<Version>${{ steps.semver.outputs.version }}<\/Version>/' Athena.csproj
+        
+        git config user.email "${{ github.actor }}@users.noreply.github.com"
+        git config user.name "${{ github.actor }}"
+
+        git add Athena.csproj
+        git commit -m "Bump Athena version to ${{ steps.semver.outputs.version }}"
+        git tag v${{ steps.semver.outputs.version }} -a -m "Athena version ${{ steps.semver.outputs.version }}"
+
+        git push --follow-tags
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

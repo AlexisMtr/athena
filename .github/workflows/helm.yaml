@@ -1,0 +1,56 @@
+name: Helm Chart
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+    paths:
+    - 'deploy/helm/**'
+    branches:
+    - main
+  push:
+    paths:
+    - 'deploy/helm/**'
+    branches:
+    - main
+  release:
+    types:
+    - created
+
+jobs:
+  semantic_version:
+    name: Compute next version
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: paulhatch/semantic-version@v3
+      id: semver
+      name: Compute SemVer
+      with:
+        branch: "main"
+        tag_prefix: "helm-"
+        major_pattern: "BREAKING CHANGES"
+        minor_pattern: "feature"
+        format: "${major}.${minor}.${patch}"
+    - name: Comment PR
+      uses: thollander/actions-comment-pull-request@master
+      with:
+        message: "### 👷🏻‍♂️ Next helm chart version will be **${{ steps.semver.outputs.version}}**\ndon't worry, Github Action will take care of all of this for you once this PR will be merged 🧘🏻‍♀️"
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Update chart version, tag and push
+      if: github.event_name != 'pull_request'
+      run: |
+        sed 's/appVersion: .*/appVersion: ${{ steps.semver.outputs.version}}/' ./deploy/helm/athena/Chart.yaml
+        
+        git config user.email "${{ github.actor }}@users.noreply.github.com"
+        git config user.name "${{ github.actor }}"
+
+        git add ./deploy/helm/athena/Chart.yaml
+        git commit -m "Bump Athena helm chart version to ${{ steps.semver.outputs.version }}"
+        git tag ${{ steps.semver.outputs.version }} -a -m "Athena helm chart version ${{ steps.semver.outputs.version }}"
+
+        git push --follow-tags
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

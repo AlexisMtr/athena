@@ -7,3 +7,7 @@ azure-arm:
 source:
 - 'src/**/*'
 - '!src/docs/*'
+ci-workflow:
+- '.github/workflows'
+CODEOWNERS:
+- '.github/CODEOWNERS'

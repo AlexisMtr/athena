@@ -1,6 +1,7 @@
 name: Athena Actions
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, edited, synchronize]
     paths:
@@ -95,6 +96,7 @@ jobs:
         add_git_labels: true
 
   semantic_version:
+    if: "! contains(toJSON(github.event.commits.*.message), '[skip-versionning]')"
     name: Compute next version
     runs-on: ubuntu-latest
     steps:
@@ -137,7 +139,7 @@ jobs:
         git config user.name "${{ github.actor }}"
 
         git add Athena.csproj
-        git commit -m "chore: bump Athena version to ${{ steps.semver.outputs.version }}"
+        git commit -m "chore: bump Athena version to ${{ steps.semver.outputs.version }} [skip-versionning]"
         git tag v${{ steps.semver.outputs.version }} -a -m "Athena version ${{ steps.semver.outputs.version }}"
 
         git push --follow-tags

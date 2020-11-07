@@ -1,6 +1,7 @@
 name: Helm Chart
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, edited, synchronize]
     paths:
@@ -18,7 +19,7 @@ on:
 
 jobs:
   semantic_version:
-    if: "! contains(toJSON(github.event.commits.*.message), '[skip-ci]')"
+    if: "! contains(toJSON(github.event.commits.*.message), '[skip-versionning]')"
     name: Compute next version
     runs-on: ubuntu-latest
     steps:
@@ -65,7 +66,7 @@ jobs:
         git config user.name "${{ github.actor }}"
 
         git add ./deploy/helm/athena/Chart.yaml
-        git commit -m "chore: bump Athena helm chart version to ${{ steps.semver.outputs.version }} [skip-ci]"
+        git commit -m "chore: bump Athena helm chart version to ${{ steps.semver.outputs.version }} [skip-versionning]"
         git tag helm-${{ steps.semver.outputs.version }} -a -m "Athena helm chart version ${{ steps.semver.outputs.version }}"
 
         git push --follow-tags

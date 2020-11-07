@@ -3,21 +3,15 @@ name: Athena Actions
 on:
   pull_request:
     types: [opened, edited, synchronize]
-    paths-ignore:
-    - '.devcontainer/**'
-    - '.github/CODEOWNERS'
-    - 'deploy/**'
-    - 'README.md'
-    - 'docs/*'
+    paths:
+    - 'src/**'
+    - '!src/docs/*'
     branches:
     - main
   push:
-    paths-ignore:
-    - '.devcontainer/**'
-    - '.github/CODEOWNERS'
-    - 'deploy/**'
-    - 'README.md'
-    - 'docs/*'
+    paths:
+    - 'src/**'
+    - '!src/docs/*'
     branches:
     - main
 
@@ -55,7 +49,7 @@ jobs:
       shell: powershell
       run: |
         .\.sonar\scanner\dotnet-sonarscanner begin /k:"AlexisMtr_athena" /o:"alexismtr-github" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
-        dotnet publish Athena.sln
+        dotnet publish src/Athena.sln
         .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
   build:
@@ -76,7 +70,7 @@ jobs:
         then
           configuration=Debug
         fi
-        dotnet publish Athena.csproj -c $configuration -o ./app/publish
+        dotnet publish src/Athena.csproj -c $configuration -o ./app/publish
     - name: Publish Build Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -96,6 +90,7 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         repository: alexismtr/athena
+        path: ./src
         tag_with_ref: true
         add_git_labels: true
 

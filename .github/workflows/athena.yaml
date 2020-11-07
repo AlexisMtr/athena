@@ -131,7 +131,7 @@ jobs:
     - name: Update Version, tag and push
       if: ${{ steps.semver.outputs.changed && github.event_name == 'push' }}
       run: |
-        sed -i 's/<Version>.*<\/Version>/<Version>${{ steps.semver.outputs.version }}<\/Version>/' Athena.csproj
+        sed -i 's/<Version>.*<\/Version>/<Version>${{ steps.semver.outputs.version }}<\/Version>/' ./src/Athena.csproj
         
         git config user.email "${{ github.actor }}@users.noreply.github.com"
         git config user.name "${{ github.actor }}"

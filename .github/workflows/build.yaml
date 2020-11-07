@@ -6,7 +6,7 @@ on:
     paths-ignore:
     - '.devcontainer/**'
     - '.github/CODEOWNERS'
-    - '.infra-as-code/**'
+    - 'deploy/**'
     - 'README.md'
     - 'docs/*'
     branches:
@@ -15,7 +15,7 @@ on:
     paths-ignore:
     - '.devcontainer/**'
     - '.github/CODEOWNERS'
-    - '.infra-as-code/**'
+    - 'deploy/**'
     - 'README.md'
     - 'docs/*'
     branches:
@@ -26,7 +26,7 @@ on:
 
 jobs:
   code_quality:
-    name: Code Qaulity
+    name: Code Quality
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2

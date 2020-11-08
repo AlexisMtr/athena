@@ -1,6 +1,5 @@
 ﻿using Athena.Models;
 using Athena.Repositories;
-using Microsoft.Azure.Documents;
 
 namespace Athena.Services
 {

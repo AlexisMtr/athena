@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Athena.Dtos
+﻿namespace Athena.Dtos
 {
     public class DeviceConfigurationDto
     {

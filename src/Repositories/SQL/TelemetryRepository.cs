@@ -1,6 +1,5 @@
 ﻿using Athena.Configuration;
 using Athena.Models;
-using System;
 
 namespace Athena.Repositories.SQL
 {

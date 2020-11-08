@@ -27,7 +27,7 @@ namespace Athena.Services
             if (pool == null)
             {
                 log.LogError($"No pool associated to device {deviceId}");
-                throw new Exception($"Pool not found");
+                throw new KeyNotFoundException($"Pool not found");
             }
             foreach(Telemetry telemetry in telemetries)
             {

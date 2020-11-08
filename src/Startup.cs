@@ -35,8 +35,6 @@ namespace Athena
 
             builder.Services.AddDbContext<AthenaContext>(opt
                 => opt.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-            // or 
-            //  => opt.UseInMemoryDatabase(databaseName: "poseidon"));
 
             builder.Services.AddScoped<IPoolRepository, PoolRepository>();
             builder.Services.AddScoped<ITelemetryRepository, TelemetryRepository>();

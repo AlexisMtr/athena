@@ -5,9 +5,10 @@ azure-terraform:
 azure-arm:
 - deploy/infra-as-code/azure-arm/**/*
 source:
-- 'src/**/*'
-- '!src/docs/*'
+- src/**/*
+docs:
+- src/docs/**/*
 ci-workflow:
-- '.github/workflows'
+- '.github/workflows/**/*'
 CODEOWNERS:
 - '.github/CODEOWNERS'

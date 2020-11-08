@@ -139,7 +139,7 @@ jobs:
         git config user.email "${{ github.actor }}@users.noreply.github.com"
         git config user.name "${{ github.actor }}"
 
-        git add .src/Athena.csproj
+        git add ./src/Athena.csproj
         git commit -m "chore: bump Athena version to ${{ steps.semver.outputs.version }} [skip-versionning]"
         git tag v${{ steps.semver.outputs.version }} -a -m "Athena version ${{ steps.semver.outputs.version }}"
 

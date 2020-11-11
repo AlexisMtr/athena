@@ -13,34 +13,30 @@ on:
     - 'deploy/helm/**'
     branches:
     - main
-  release:
-    types:
-    - created
 
 jobs:
   semantic_version:
-    if: "! contains(toJSON(github.event.commits.*.message), '[skip-versionning]')"
+    if: "! contains(toJSON(github.event.commits.*.message), '[skip ci]')"
     name: Compute next version
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v2
       with:
+        token: ${{ secrets.PAT_GITHUB }}
         fetch-depth: 0
+
     - name: Retrieve branch name
       id: branch_name
       env:
         PR_HEAD_LABEL: ${{ github.event.pull_request.head.label }}
       run: |
         if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
-          echo "branch=${PR_HEAD_LABEL#*:}" >> $GITHUB_ENV
           echo "::set-output name=branch::${PR_HEAD_LABEL#*:}"
-          echo $branch
         else
-          echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
           echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
-          echo $branch
         fi
+
     - uses: paulhatch/semantic-version@v3
       id: semver
       name: Compute SemVer
@@ -48,15 +44,17 @@ jobs:
         branch: "${{ steps.branch_name.outputs.branch }}"
         tag_prefix: "helm-"
         major_pattern: "BREAKING CHANGES"
-        minor_pattern: "feature"
+        minor_pattern: "feat"
         format: "${major}.${minor}.${patch}"
         change_path: 'deploy/helm/'
+
     - name: Comment PR
       if: ${{ steps.semver.outputs.changed && github.event_name == 'pull_request' }}
       uses: thollander/actions-comment-pull-request@master
       with:
         message: "### 👷🏻‍♂️ Next helm chart version will be **${{ steps.semver.outputs.version}}**\ndon't worry, Github Action will take care of all of this for you once this PR will be merged 🧘🏻‍♀️"
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
+
     - name: Update chart version, tag and push
       if: ${{ steps.semver.outputs.changed && github.event_name == 'push' }}
       run: |
@@ -66,9 +64,9 @@ jobs:
         git config user.name "${{ github.actor }}"
 
         git add ./deploy/helm/athena/Chart.yaml
-        git commit -m "chore: bump Athena helm chart version to ${{ steps.semver.outputs.version }} [skip-versionning]"
+        git commit -m "chore(helm): bump Athena helm chart version to ${{ steps.semver.outputs.version }} [skip ci]"
         git tag helm-${{ steps.semver.outputs.version }} -a -m "Athena helm chart version ${{ steps.semver.outputs.version }}"
 
         git push --follow-tags
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}

@@ -1,13 +1,16 @@
 helm-chart:
-- deploy/helm/**/*
-azure-terraform:
-- deploy/infra-as-code/azure-tf/**/*
-azure-arm:
-- deploy/infra-as-code/azure-arm/**/*
+- helm/**/*
+azure:
+- infra/azure/**/*
+arm:
+- infra/azure/arm/**/*
+terraform:
+- infra/**/terraform/**/*
 source:
 - src/**/*
 docs:
 - src/docs/**/*
+- docs/**/*
 ci-workflow:
 - '.github/workflows/**/*'
 CODEOWNERS:

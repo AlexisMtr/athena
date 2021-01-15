@@ -1,0 +1,22 @@
+branches:
+- master
+plugins:
+- "@semantic-release/commit-analyzer"
+- "@semantic-release/release-notes-generator"
+- - "@semantic-release/changelog"
+  - changelogFile: CHANGELOG.md
+- - "@semantic-release/exec"
+  - verifyConditionsCmd: "echo custom script"
+    prepareCmd: 'sed -Ei "s/^version:\s?(.*)/version: ${nextRelease.version}/g" athena/Chart.yaml'
+    publishCmd: 'helm package -u athena -d .'
+- - "@semantic-release/git"
+  - assets:
+    - CHANGELOG.md
+    - athena/Chart.yaml
+    message: |-
+      release: helm chart ${nextRelease.version} [skip ci]
+
+      ${nextRelease.notes}
+- - "@semantic-release/github"
+  - assets:
+    - path: "*.tgz"

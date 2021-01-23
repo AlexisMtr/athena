@@ -45,27 +45,27 @@ spec:
           valueFrom:
             secretKeyRef:
               name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
-              key: azure_storage
+              key: AZ_STORAGE
         - name: AzureWebJobsDashboard
           valueFrom:
             secretKeyRef:
               name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
-              key: azure_storage
+              key: AZ_STORAGE
         - name: EventSubscribeConnectionString
           valueFrom:
             secretKeyRef:
               name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
-              key: EventSubscribeConnectionString
+              key: EVT_SUB_CONNECTION_STRING
         - name: EventPublishConnectionString
           valueFrom:
             secretKeyRef:
               name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
-              key: EventPublishConnectionString
+              key: EVT_PUB_CONNECTION_STRING
         - name: ConnectionStrings__DefaultConnection
           valueFrom:
             secretKeyRef:
               name: {{ printf "%s-%s" (include "athena.fullname" .) "secret-env" }}
-              key: DbConnectionString
+              key: DB_CONNECTION_STRING
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
       {{- with .Values.nodeSelector }}

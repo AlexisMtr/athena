@@ -11,7 +11,7 @@ plugins:
     publishCmd: |
       dotnet publish Athena.csproj -c Release -o ./app/publish
       cd ./app/publish
-      tar -zcvf athena.tar.gz .
+      touch athena.tar.gz && tar --exclude athena.tar.gz -zcvf athena.tar.gz .
 
 - - "@semantic-release/git"
   - assets:

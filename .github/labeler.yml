@@ -11,6 +11,7 @@ source:
 docs:
 - src/docs/**/*
 - docs/**/*
+- ./**/*.md
 ci-workflow:
 - '.github/workflows/**/*'
 CODEOWNERS:

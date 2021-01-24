@@ -195,28 +195,79 @@ jobs:
         echo "TAG(s): ${{ steps.docker_meta.outputs.tags }}"
         echo "DIGEST: ${{ steps.docker_build.outputs.digest }}"
 
-  helm_package:
-    needs: [ 'general' ]
+
+  helm_checks:
+    needs: [ 'general', 'docker' ]
     if: ${{ needs.general.outputs.helm == 'true' || needs.general.outputs.athena == 'true' && !contains(toJSON(github.event.commits.*.message), '[skip ci]') }}
-    name: Package Helm Chart
+    name: Helm Test
+    runs-on: ubuntu-20.04
+    env:
+      PR_ID: ${{ needs.general.outputs.pr_id }}
+    strategy:
+      matrix:
+        k8s:
+        - v1.16.15
+        - v1.17.17
+        - v1.18.15
+        - v1.19.7
+        - v1.20.2
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+      
+    - name: Change chart version
+      run: |
+        sed -Ei "s/^version:\s?([0-9\.]+)/version: \1-${PR_ID}/" helm/athena/Chart.yaml
+        sed -Ei "s/^appVersion:\s?([0-9\.]+)/appVersion: ${PR_ID}/" helm/athena/Chart.yaml
+
+    - name: Run kubeval on ${{ matrix.k8s }}
+      env:
+        KUBERNETES_VERSION: ${{ matrix.k8s }}
+        CHART_DIR: ./helm/athena
+      run: |
+        set -euo pipefail
+
+        KUBEVAL_VERSION="0.15.0"
+        SCHEMA_LOCATION="https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/"
+        KUBEVAL_SRC=$(echo "https://github.com/instrumenta/kubeval/releases/download/${KUBEVAL_VERSION}/kubeval-linux-amd64.tar.gz")
+        # install kubeval
+        curl --silent --show-error --fail --location --output /tmp/kubeval.tar.gz $KUBEVAL_SRC
+        tar -xf /tmp/kubeval.tar.gz kubeval
+
+        helm template $CHART_DIR | ./kubeval --strict \
+          --ignore-missing-schemas --kubernetes-version "${KUBERNETES_VERSION#v}" \
+          --schema-location "${SCHEMA_LOCATION}"
+
+    # - name: Create kind ${{ matrix.k8s }} cluster
+    #   uses: helm/kind-action@master
+    #   with:
+    #     node_image: kindest/node:${{ matrix.k8s }}
+    # - name: Run chart-testing (install)
+    #   uses: helm/chart-testing-action@master
+    #   with:
+    #     command: install
+    #     config: .github/ct.yaml
+        
+  helm_package:
+    needs: [ 'general', 'helm_checks' ]
+    if: ${{ needs.general.outputs.helm == 'true' || needs.general.outputs.athena == 'true' && !contains(toJSON(github.event.commits.*.message), '[skip ci]') }}
+    name: Helm Package
     runs-on: ubuntu-20.04
     env:
       PR_ID: ${{ needs.general.outputs.pr_id }}
     steps:
-    - name: Check out the repo
+    - name: Checkout
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
-    - name: Change chart version
-      run: |
-        sed -ri "s/^version:\s?(.*)/version: \1-${PR_ID}/" helm/athena/Chart.yaml
-
-    - name: install Helm
-      uses: azure/setup-helm@v1
-
     - name: Helm template / Package
       run: |
+        sed -Ei "s/^version:\s?([0-9\.]+)/version: \1-${PR_ID}/" helm/athena/Chart.yaml
+        sed -Ei "s/^appVersion:\s?([0-9\.]+)/appVersion: ${PR_ID}/" helm/athena/Chart.yaml
+        
         cd ./helm/athena
         mkdir -p artifacts
 

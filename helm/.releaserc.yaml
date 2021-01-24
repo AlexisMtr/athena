@@ -7,12 +7,16 @@ plugins:
   - changelogFile: CHANGELOG.md
 - - "@semantic-release/exec"
   - verifyConditionsCmd: "echo custom script"
-    prepareCmd: 'sed -Ei "s/^version:\s?(.*)/version: ${nextRelease.version}/g" athena/Chart.yaml'
+    prepareCmd: |
+      sed -Ei "s/^version:\s?(.*)/version: ${nextRelease.version}/g" athena/Chart.yaml
+      helm-docs -t $PWD/README.md.gotmpl
+
     publishCmd: 'helm package -u athena -d .'
 - - "@semantic-release/git"
   - assets:
     - CHANGELOG.md
     - athena/Chart.yaml
+    - athena/README.md
     message: |-
       release: helm chart ${nextRelease.version} [skip ci]
 

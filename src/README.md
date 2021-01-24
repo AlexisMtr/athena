@@ -36,33 +36,32 @@ VisualStudio add local.settings.json file to the .gitignore for the FunctionApp.
 ```
 # Build
 ## Using CLI
-```sh
+```shell
 $ dotnet build -c <Debug|Release> -o build Athena.csproj
 ```
 ## Using Docker
-```sh
+```shell
 $ docker build -t athena .
 ```
 # Run
-## using `CLI`
+## using CLI
 (reference: [azure function documentation](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=linux%2Ccsharp%2Cbash#start))
-```sh
+```shell
 $ func run --build
 ```
 ## using Docker
-```sh
+```shell
 $ docker run -it --rm --name athena \
-  -e "ConnectionStrings__DefaultConnection=<your_db_connection_string>" \
-  -e "AzureFunctionsJobHost__Logging__Console__IsEnabled=true" \
-  -e "AzureWebJobsSecretStorageType='blob'" \
-  -e "AzureWebJobsStorage=<your_storage_account>" \
-  -e "AzureWebJobsDashboard=<your_storage_account>" \
-  -e "FUNCTIONS_WORKER_RUNTIME=dotnet" \
-  -e "FUNCTIONS_EXTENSION_VERSION=~3" \
-  -e "EventSubscribeConnectionString=<your_broker_connection_string>" \
-  -e "EventSubscribe=<your_subsribe_topic>" \
-  -e "EventPublishConnectionString=<your_broker_connection_string>" \
-  -e "EventPublish=<your_publish_topic>" \
-  -p 8080:80
-  athena
+> -e "ConnectionStrings__DefaultConnection=<your_db_connection_string>" \
+> -e "AzureFunctionsJobHost__Logging__Console__IsEnabled=true" \
+> -e "AzureWebJobsSecretStorageType='blob'" \
+> -e "AzureWebJobsStorage=<your_storage_account>" \
+> -e "AzureWebJobsDashboard=<your_storage_account>" \
+> -e "FUNCTIONS_WORKER_RUNTIME=dotnet" \
+> -e "FUNCTIONS_EXTENSION_VERSION=~3" \
+> -e "EventSubscribeConnectionString=<your_broker_connection_string>" \
+> -e "EventSubscribe=<your_subsribe_topic>" \
+> -e "EventPublishConnectionString=<your_broker_connection_string>" \
+> -e "EventPublish=<your_publish_topic>" \
+> -p 8080:80 athena
 ```

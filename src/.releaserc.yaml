@@ -1,0 +1,29 @@
+branches:
+- master
+plugins:
+- "@semantic-release/commit-analyzer"
+- "@semantic-release/release-notes-generator"
+- - "@semantic-release/changelog"
+  - changelogFile: CHANGELOG.md
+- - "@semantic-release/exec"
+  - verifyConditionsCmd: "echo \"execute successCmd\""
+    prepareCmd: sed -Ei "s#<Version>.*</Version>#<Version>${nextRelease.version}</Version>#g" Athena.csproj
+    publishCmd: |
+      dotnet publish Athena.csproj -c Release -o ./app/publish
+      cd ./app/publish
+      touch athena.tar.gz && tar --exclude athena.tar.gz -zcvf athena.tar.gz .
+
+- - "@semantic-release/git"
+  - assets:
+    - CHANGELOG.md
+    - Athena.csproj
+    message: |-
+      release: ${nextRelease.version} [skip ci]
+
+      ${nextRelease.notes}
+- - "@semantic-release/github"
+  - assets:
+    - path: './app/publish/athena.tar.gz'
+- - "@semantic-release/exec"
+  - verifyConditionsCmd: "echo \"execute successCmd\""
+    successCmd: "../.github/workflows/scripts/commit-helm -c ../helm/athena/Chart.yaml -t ${nextRelease.type} -v ${nextRelease.version} -s v"

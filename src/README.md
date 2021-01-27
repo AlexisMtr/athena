@@ -1,10 +1,21 @@
-# Athena
-## About
-Athena is a component of project Poseidon (a connected swimming pool system)  
-It's responsible to store and dispatch every incoming telemetries to other services of the solution in addition to forwarding device's configuration to the telemetry's sender
+>NOTE: The project is built on .NET Core 3.1, be sure to have the SDK on your machine, or [install it](https://dotnet.microsoft.com/download/dotnet-core/3.1)
+# Configure your dev machine
 
-## Settings
-In `local.settings.json`
+## Environment variables
+| name | description |
+| ---- | ----------- |
+| AzureWebJobsStorage | Connection string to Azure Storage Account |
+| AzureWebJobsDashboard | Connection string to Azure Storage Account |
+| FUNCTIONS_WORKER_RUNTIME | should be `dotnet` |
+| FUNCTIONS_EXTENSION_VERSION | should be `~3` |
+| EventSubscribeConnectionString | Connection string for broker |
+| EventSubscribe | Event path to subscribe (eg: topic) |
+| EventPublishConnectionString | Connection string for broker |
+| EventPublish | Event path to publish (eg: topic) |
+| ConnectionStrings__DefaultConnection | DB ConnectionString |
+
+## VisualStudio / VSCode
+VisualStudio add local.settings.json file to the .gitignore for the FunctionApp. So, add local.settings.json to the project and configure the values (see [Environment Variables](#Environment-variables))
 ```json
 {
   "IsEncrypted": false,
@@ -16,10 +27,41 @@ In `local.settings.json`
     "EventSubscribeConnectionString": "",
     "EventSubscribe": "",
     "EventPublishConnectionString": "",
-    "EventPublish":  ""
+    "EventPublish": ""
   },
   "ConnectionStrings": {
     "DefaultConnection": ""
   }
 }
+```
+# Build
+## Using CLI
+```shell
+$ dotnet build -c <Debug|Release> -o build Athena.csproj
+```
+## Using Docker
+```shell
+$ docker build -t athena .
+```
+# Run
+## using CLI
+(reference: [azure function documentation](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=linux%2Ccsharp%2Cbash#start))
+```shell
+$ func run --build
+```
+## using Docker
+```shell
+$ docker run -it --rm --name athena \
+> -e "ConnectionStrings__DefaultConnection=<your_db_connection_string>" \
+> -e "AzureFunctionsJobHost__Logging__Console__IsEnabled=true" \
+> -e "AzureWebJobsSecretStorageType='blob'" \
+> -e "AzureWebJobsStorage=<your_storage_account>" \
+> -e "AzureWebJobsDashboard=<your_storage_account>" \
+> -e "FUNCTIONS_WORKER_RUNTIME=dotnet" \
+> -e "FUNCTIONS_EXTENSION_VERSION=~3" \
+> -e "EventSubscribeConnectionString=<your_broker_connection_string>" \
+> -e "EventSubscribe=<your_subsribe_topic>" \
+> -e "EventPublishConnectionString=<your_broker_connection_string>" \
+> -e "EventPublish=<your_publish_topic>" \
+> -p 8080:80 athena
 ```

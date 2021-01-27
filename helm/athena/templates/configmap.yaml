@@ -8,8 +8,10 @@ metadata:
     helm.sh/chart: {{ include "athena.chart" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
+type: Opaque
 data:
-  {{- range $index, $value := .Values.environments}}
-    {{$index}}: "{{ $value }}" 
-  {{- end}}
-  
+  FUNCTIONS_WORKER_RUNTIME: {{ .Values.environments.faRuntime }}
+  FUNCTIONS_EXTENSION_VERSION: {{ .Values.environments.faExtensionVersion }}
+  AZURE_FUNCTIONS_ENVIRONMENT: {{ .Values.environments.environment }}
+  EventPublish: {{ .Values.environments.eventPublishTopic }}
+  EventSubscribe: {{ .Values.environments.eventSubscribeTopic }}

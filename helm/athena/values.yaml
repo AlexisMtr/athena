@@ -49,14 +49,15 @@ tolerations: []
 affinity: {}
 
 environments:
-  FUNCTIONS_WORKER_RUNTIME: dotnet
-  FUNCTIONS_EXTENSION_VERSION: ~3
-  AZURE_FUNCTIONS_ENVIRONMENT: Production
-  EventPublish: new_computed_telemetries
-  EventSubscribe: new_telemetries
+  faRuntime: dotnet
+  faExtensionVersion: ~3
+  environment: Development
+  eventPublishTopic:
+  eventSubcribeTopic:
 
-environmentSecrets:
-  AZ_STORAGE: "" # must be secret 
-  EVT_SUB_CONNECTION_STRING: "" # must be secret
-  EVT_PUB_CONNECTION_STRING: "" # must be secret
-  DB_CONNECTION_STRING: "" # must be secret
+environmentsSecret:
+  connectionStrings:
+    azStorage:
+    publishBroker:
+    subscribeBroker:
+    sqlServer:

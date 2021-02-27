@@ -1,3 +1,11 @@
+# [helm-chart-v1.1.1](https://github.com/AlexisMtr/athena/compare/helm-chart-v1.1.0...helm-chart-v1.1.1) (2021-02-27)
+
+
+### Bug Fixes
+
+* **secret:** generate secret only if existingEnvSecret is not defined ([378fbc0](https://github.com/AlexisMtr/athena/commit/378fbc01c83453b7a3e6361b4b62854b46b66df9))
+* quote secrets and configmap ([86c19a6](https://github.com/AlexisMtr/athena/commit/86c19a6af19aa6e8ae5d681b013514f87d29fa60))
+
 # [helm-chart-v1.1.0](https://github.com/AlexisMtr/athena/compare/helm-chart-v1.0.0...helm-chart-v1.1.0) (2021-02-27)
 
 

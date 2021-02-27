@@ -55,6 +55,8 @@ environments:
   eventPublishTopic:
   eventSubcribeTopic:
 
+# -- use existing secret to set environment secret variable
+existingEnvSecret:
 environmentsSecret:
   connectionStrings:
     azStorage:

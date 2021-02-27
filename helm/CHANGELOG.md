@@ -1,3 +1,10 @@
+# [helm-chart-v1.1.0](https://github.com/AlexisMtr/athena/compare/helm-chart-v1.0.0...helm-chart-v1.1.0) (2021-02-27)
+
+
+### Features
+
+* **env:** allow existing secret to fill env variables ([f69b0df](https://github.com/AlexisMtr/athena/commit/f69b0df2c9bc9eb70297f5ce3862bfbcae1faed5))
+
 # helm-chart-v1.0.0 (2021-01-27)
 
 

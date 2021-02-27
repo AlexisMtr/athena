@@ -1,7 +1,7 @@
  
 # athena
 
-![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.0](https://img.shields.io/badge/AppVersion-1.0.0-informational?style=flat-square)
+![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.0](https://img.shields.io/badge/AppVersion-1.0.0-informational?style=flat-square)
 
 API component of Poseidon project
 
@@ -12,7 +12,7 @@ To install the chart with the release name `my-release`:
 ```console
 $ helm repo add poseidon https://alexismtr.github.io/poseidon-helm-chart
 $ helm repo update
-$ helm install my-release poseidon/athena --version 1.0.0
+$ helm install my-release poseidon/athena --version 1.1.0
 ```
 
 ## Values
@@ -33,6 +33,7 @@ $ helm install my-release poseidon/athena --version 1.0.0
 | environmentsSecret.connectionStrings.publishBroker | string | `nil` |  |
 | environmentsSecret.connectionStrings.sqlServer | string | `nil` |  |
 | environmentsSecret.connectionStrings.subscribeBroker | string | `nil` |  |
+| existingEnvSecret | string | `nil` | use existing secret to set environment secret variable |
 | fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"alexismtr/athena"` |  |

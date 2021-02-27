@@ -1,3 +1,4 @@
+{{ $secretRef := default (printf "%s-%s" (include "athena.fullname" .) "secret-env") .Values.existingEnvSecret }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -44,27 +45,27 @@ spec:
         - name: AzureWebJobsStorage
           valueFrom:
             secretKeyRef:
-              name: {{ default (printf "%s-%s" (include "athena.fullname" .) "secret-env") .Values.existingEnvSecret }}
+              name: {{ $secretRef }}
               key: AZ_STORAGE
         - name: AzureWebJobsDashboard
           valueFrom:
             secretKeyRef:
-              name: {{ default (printf "%s-%s" (include "athena.fullname" .) "secret-env") .Values.existingEnvSecret }}
+              name: {{ $secretRef }}
               key: AZ_STORAGE
         - name: EventSubscribeConnectionString
           valueFrom:
             secretKeyRef:
-              name: {{ default (printf "%s-%s" (include "athena.fullname" .) "secret-env") .Values.existingEnvSecret }}
+              name: {{ $secretRef }}
               key: EVT_SUB_CONNECTION_STRING
         - name: EventPublishConnectionString
           valueFrom:
             secretKeyRef:
-              name: {{ default (printf "%s-%s" (include "athena.fullname" .) "secret-env") .Values.existingEnvSecret }}
+              name: {{ $secretRef }}
               key: EVT_PUB_CONNECTION_STRING
         - name: ConnectionStrings__DefaultConnection
           valueFrom:
             secretKeyRef:
-              name: {{ default (printf "%s-%s" (include "athena.fullname" .) "secret-env") .Values.existingEnvSecret }}
+              name: {{ $secretRef }}
               key: DB_CONNECTION_STRING
         resources:
           {{- toYaml .Values.resources | nindent 10 }}

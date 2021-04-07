@@ -8,9 +8,12 @@ Whatever you decide, both methods will deploy the following resources on Azure
 
 Both methods will outputs
 * FunctionApp Indentity PrincipalId
-* ApplicationInsights instrumentationKey
-## ARM
-You can find in `templates` folder the ARM Template that you can use to deploy the required resources on an Azure ResourceGroup
-### Bicep
-**WIP**, see [Azure Bicep](https://github.com/azure/bicep)
+## ARM/Bicep
+Deploy required resource on Azure using [Bicep DSL](https://github.com/azure/bicep)
+```console
+$ export RG_NAME=
+$ export DEPLOYMENT_NAME=
+$ az deployment group create -g $RG_NAME -n $DEPLOYMENT_NAME -f bicep/main.bicep
+```
 ## Terraform
+This folder contain Terraform module. To use it, create a workspace and import this module

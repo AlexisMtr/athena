@@ -60,3 +60,17 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{- define "athena.dapr.annotations" -}}
+dapr.io/enabled: {{ .Values.dapr.enabled | quote }}
+dapr.io/app-id: {{ include "athena.name" . | quote }}
+{{- if .Values.dapr.app.port }}
+dapr.io/app-port: {{ .Values.dapr.app.port | quote }}
+{{- end }}
+dapr.io/log-as-json: {{ default "false" .Values.dapr.log.json | quote }}
+dapr.io/log-level: {{ default "info" .Values.dapr.log.level | quote }}
+{{- with .Values.dapr.extraAnnotations }}
+{{ toYaml . }}
+{{- end }}
+{{- end }}

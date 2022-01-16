@@ -9,8 +9,26 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 data:
-  FUNCTIONS_WORKER_RUNTIME: {{ .Values.environments.faRuntime | quote }}
-  FUNCTIONS_EXTENSION_VERSION: {{ .Values.environments.faExtensionVersion | quote }}
-  AZURE_FUNCTIONS_ENVIRONMENT: {{ .Values.environments.environment | quote }}
-  EventPublish: {{ .Values.environments.eventPublishTopic | quote }}
-  EventSubscribe: {{ .Values.environments.eventSubscribeTopic | quote }}
+  FUNCTIONS_WORKER_RUNTIME: {{ .Values.configuration.azFunction.runtime | quote }}
+  FUNCTIONS_EXTENSION_VERSION: {{ .Values.configuration.azFunction.extensionVersion | quote }}
+  AZURE_FUNCTIONS_ENVIRONMENT: {{ .Values.configuration.azFunction.environment | quote }}
+  EventPublish: {{ default "" .Values.configuration.pubSub.topics.publish | quote }}
+  EventSubscribe: {{ default "" .Values.configuration.pubSub.topics.subscribe | quote }}
+  subComponentName: {{ default "" .Values.configuration.pubSub.dapr.subComponentName | quote }}
+  pubComponentName: {{ default "" .Values.configuration.pubSub.dapr.pubComponentName | quote }}
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ printf "%s-%s" (include "athena.name" .) "functions" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "athena.name" . }}
+    helm.sh/chart: {{ include "athena.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+{{- range $function, $status := .Values.configuration.azFunction.functions -}}
+  {{ $functionSetting := printf "AzureWebJobs.%s.Disabled" $function }}
+  {{ $functionSetting }}: {{ $status.disabled | quote }}
+{{- end }}

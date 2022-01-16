@@ -48,18 +48,72 @@ tolerations: []
 
 affinity: {}
 
-environments:
-  faRuntime: dotnet
-  faExtensionVersion: ~3
-  environment: Development
-  eventPublishTopic:
-  eventSubcribeTopic:
+dapr:
+  enabled: true
+  extraAnnotations:
+  app:
+    port: 3001
+  metrics:
+    port: 9090
+  log:
+    json: false
+    level: info
+  components:
+    # rabbitmq:
+    #   spec: |
+    #     apiVersion: dapr.io/v1alpha1
+    #     kind: Component
+    #     metadata:
+    #       name: {{ .Values.configuration.pubSub.dapr.pubComponentName }}
+    #       namespace: {{ .Release.Namespace }}
+    #     spec:
+    #       type: pubsub.rabbitmq
+    #       version: v1
+    #       metadata: # configure depend on implementation
 
-# -- use existing secret to set environment secret variable
-existingEnvSecret:
-environmentsSecret:
-  connectionStrings:
-    azStorage:
-    publishBroker:
-    subscribeBroker:
-    sqlServer:
+configuration:
+  azFunction:
+    runtime: dotnet
+    extensionVersion: ~4
+    environment: Development
+    storageAccount:
+      # -- set AZ_STORAGE key in the default secret
+      connectionString: ""
+      # -- use an already defined secret with AZ_STORAGE key
+      secretRef:
+    # -- enable / disable function at runtime
+    functions:
+      TelemetriesHttp:
+        disabled: true
+      TelemetriesEvent:
+        disabled: true
+      DaprEvent:
+        disabled: true
+
+  sqlServer:
+    # -- set DB_CONNECTION_STRING key in the default secret
+    connectionString:
+      ""
+      # -- use an already defined secret with DB_CONNECTION_STRING key
+    secretRef:
+
+  pubSub:
+    topics:
+      publish: ""
+      subscribe: ""
+    dapr:
+      pubComponentName: ""
+      subComponentName: ""
+    brokers:
+      publish:
+        # -- set EVT_PUB_CONNECTION_STRING key in the default secret
+        connectionString: ""
+        # -- use an already defined secret with EVT_PUB_CONNECTION_STRING key
+        secretRef:
+      subscribe:
+        # -- set EVT_SUB_CONNECTION_STRING key in the default secret
+        connectionString: ""
+        # -- use an already defined secret with EVT_SUB_CONNECTION_STRING key
+        secretRef:
+
+extraEnv: []

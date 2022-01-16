@@ -1,10 +1,18 @@
-{{ $secretRef := default (printf "%s-%s" (include "athena.fullname" .) "secret-env") .Values.existingEnvSecret }}
+{{ $defaultSecretRef := (printf "%s-%s" (include "athena.fullname" .) "secret-env") }}
+{{ $azSecretRef := default $defaultSecretRef .Values.configuration.azFunction.storageAccount.secretRef }}
+{{ $pubSecretRef := default $defaultSecretRef .Values.configuration.pubSub.brokers.publish.secretRef }}
+{{ $subSecretRef := default $defaultSecretRef .Values.configuration.pubSub.brokers.subscribe.secretRef }}
+{{ $sqlSecretRef := default $defaultSecretRef .Values.configuration.sqlServer.secretRef }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "athena.fullname" . }}
   labels:
     {{- include "athena.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.dapr.enabled }}
+    {{- include "athena.dapr.annotations" . | nindent 4 }}
+    {{- end }}
 spec:
 {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -14,10 +22,13 @@ spec:
       {{- include "athena.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-    {{- with .Values.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 6 }}
-    {{- end }}
+      {{- if .Values.podAnnotations }}
+      {{- toYaml .Values.podAnnotations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.dapr.enabled }}
+      {{- include "athena.dapr.annotations" . | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "athena.selectorLabels" . | nindent 8 }}
     spec:
@@ -41,32 +52,37 @@ spec:
         envFrom:
         - configMapRef:
             name: {{ printf "%s-%s" ( include "athena.name" .) "env"}}
+        - configMapRef:
+            name: {{ printf "%s-%s" ( include "athena.name" .) "functions"}}
         env:
         - name: AzureWebJobsStorage
           valueFrom:
             secretKeyRef:
-              name: {{ $secretRef }}
+              name: {{ $azSecretRef }}
               key: AZ_STORAGE
         - name: AzureWebJobsDashboard
           valueFrom:
             secretKeyRef:
-              name: {{ $secretRef }}
+              name: {{ $azSecretRef }}
               key: AZ_STORAGE
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: {{ $sqlSecretRef }}
+              key: DB_CONNECTION_STRING
         - name: EventSubscribeConnectionString
           valueFrom:
             secretKeyRef:
-              name: {{ $secretRef }}
+              name: {{ $subSecretRef }}
               key: EVT_SUB_CONNECTION_STRING
         - name: EventPublishConnectionString
           valueFrom:
             secretKeyRef:
-              name: {{ $secretRef }}
+              name: {{ $pubSecretRef }}
               key: EVT_PUB_CONNECTION_STRING
-        - name: ConnectionStrings__DefaultConnection
-          valueFrom:
-            secretKeyRef:
-              name: {{ $secretRef }}
-              key: DB_CONNECTION_STRING
+        {{- with .Values.extraEnv }}
+        {{ toYaml . | nindent 8 }}
+        {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
       {{- with .Values.nodeSelector }}

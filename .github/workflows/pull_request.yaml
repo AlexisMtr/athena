@@ -3,7 +3,7 @@ name: PullRequest
 on:
   pull_request:
     branches:
-    - main
+      - main
 
 jobs:
   general:
@@ -14,68 +14,73 @@ jobs:
       helm: ${{ steps.filter.outputs.helm }}
       pr_id: ${{ steps.get-pr-id.outputs.pr_id }}
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: 'Define PR Version suffix'
-      id: get-pr-id
-      run: echo "::set-output name=pr_id::$(echo ${GITHUB_REF} | sed -r 's#.*/([0-9]+)/merge#pr-\1#g')"
+      - name: "Define PR Version suffix"
+        id: get-pr-id
+        run: echo "::set-output name=pr_id::$(echo ${GITHUB_REF} | sed -r 's#.*/([0-9]+)/merge#pr-\1#g')"
 
-    - name: Detect changes
-      uses: tony84727/changed-file-filter@0.0.3
-      id: filter
-      with:
-        filters: |
-          athena:
-          - src/**/*
-          helm:
-          - helm/athena/**/*
+      - name: Detect changes
+        uses: tony84727/changed-file-filter@0.0.3
+        id: filter
+        with:
+          filters: |
+            athena:
+            - src/**/*
+            helm:
+            - helm/athena/**/*
 
   code_quality:
-    needs: [ 'general' ]
+    needs: ["general"]
     if: ${{ needs.general.outputs.athena == 'true' && !contains(toJSON(github.event.commits.*.message), '[skip ci]') }}
     name: Code Quality
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        token: ${{ secrets.PAT_GITHUB }}
-        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.11
 
-    - name: Setup .NETCore 3.1
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '3.1.x'
-        
-    - name: Cache SonarCloud packages
-      uses: actions/cache@v1
-      with:
-        path: ~\sonar\cache
-        key: ${{ runner.os }}-sonar
-        restore-keys: ${{ runner.os }}-sonar
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.PAT_GITHUB }}
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
 
-    - name: Cache SonarCloud scanner
-      id: cache-sonar-scanner
-      uses: actions/cache@v1
-      with:
-        path: .\.sonar\scanner
-        key: ${{ runner.os }}-sonar-scanner
-        restore-keys: ${{ runner.os }}-sonar-scanner
+      - name: Setup .NET6
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "6.0.x"
 
-    - name: Install SonarCloud scanner
-      if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-      shell: powershell
-      run: |
-        New-Item -Path .\.sonar\scanner -ItemType Directory
-        dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-    - name: Build and analyze
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      shell: powershell
-      run: |
-        .\.sonar\scanner\dotnet-sonarscanner begin /k:"AlexisMtr_athena" /o:"alexismtr-github" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
-        dotnet publish src/Athena.sln
-        .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v1
+        with:
+          path: ~\sonar\cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache SonarCloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v1
+        with:
+          path: .\.sonar\scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+
+      - name: Install SonarCloud scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          New-Item -Path .\.sonar\scanner -ItemType Directory
+          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: powershell
+        run: |
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"AlexisMtr_athena" /o:"alexismtr-github" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
+          dotnet publish src/Athena.sln
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
   release_indicator:
     if: ${{ !contains(toJSON(github.event.commits.*.message), '[skip ci]') }}
@@ -84,167 +89,166 @@ jobs:
     outputs:
       releases: ${{ steps.release-indicator.outputs.releases }}
     steps:
-    - name: Install zsh
-      run: sudo apt install zsh #&& sudo ln -sf "$(command -v zsh)" /bin/sh
+      - name: Install zsh
+        run: sudo apt install zsh #&& sudo ln -sf "$(command -v zsh)" /bin/sh
 
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        # persist-credentials: false
-        fetch-depth: 0
-      
-    - uses: actions/setup-node@v2.1.4
-      with:
-        node-version: 14
-        
-    - name: 'Install semantic-release'
-      if: "!contains(github.ref, 'main')"
-      run: |
-        npm i -g semantic-release  \
-          semantic-release-monorepo \
-          @semantic-release/commit-analyzer \
-          @semantic-release/release-notes-generator \
-          semantic-release-helm \
-          @semantic-release/changelog \
-          @semantic-release/github \
-          @semantic-release/git \
-          @semantic-release/exec
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # persist-credentials: false
+          fetch-depth: 0
 
-    - name: 'release indicator'
-      id: release-indicator
-      if: "!contains(github.ref, 'main')"
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
-      run: |
-        sudo chmod u+x -R .github/workflows/scripts/
+      - uses: actions/setup-node@v2.1.4
+        with:
+          node-version: 14
 
-        GITHUB_REF="${GITHUB_HEAD_REF}"
-        .github/workflows/scripts/PR-changelog -c $PWD/PR_CHANGELOG.md -v $PWD/VERSIONS.json
+      - name: "Install semantic-release"
+        if: "!contains(github.ref, 'main')"
+        run: |
+          npm i -g semantic-release  \
+            semantic-release-monorepo \
+            @semantic-release/commit-analyzer \
+            @semantic-release/release-notes-generator \
+            semantic-release-helm \
+            @semantic-release/changelog \
+            @semantic-release/github \
+            @semantic-release/git \
+            @semantic-release/exec
 
-        CHANGELOG=$(cat $PWD/PR_CHANGELOG.md)
-        CHANGELOG="${CHANGELOG//'%'/'%25'}"
-        CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
-        CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+      - name: "release indicator"
+        id: release-indicator
+        if: "!contains(github.ref, 'main')"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
+        run: |
+          sudo chmod u+x -R .github/workflows/scripts/
 
-        echo "::set-output name=releases::$(cat ${PWD}/VERSIONS.json | jq '.[] | del(.changelog_path)' | jq -sc)"
-        echo "::set-output name=release_required::$(cat ${PWD}/VERSIONS.json | jq '. | length')"
-        echo "::set-output name=full_changelog::${CHANGELOG}"
-        
-        rm -rf $PWD/PR_CHANGELOG.md
-        rm -rf $PWD/VERSIONS.json
+          GITHUB_REF="${GITHUB_HEAD_REF}"
+          .github/workflows/scripts/PR-changelog -c $PWD/PR_CHANGELOG.md -v $PWD/VERSIONS.json
 
-    - name: 'release indicator - comment pr'
-      uses: actions/github-script@v3
-      if: "!contains(github.ref, 'main')"
-      env:
-        RELEASES: ${{ steps.release-indicator.outputs.releases }}
-        RELEASES_NOTES: ${{ steps.release-indicator.outputs.full_changelog }}
-        RELEASE_REQUIRED: ${{ steps.release-indicator.outputs.release_required }}
-      with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
-        script: |
-          const PR_COMMENT_TITLE = '## :package: Release indicator\n\n';
-          const release = process.env.RELEASE_REQUIRED;
-          const owner = context.repo.owner;
-          const repo = context.repo.repo;
-          const issue_number = context.issue.number;
-          const comments = await github.issues.listComments({
-            owner,
-            repo,
-            issue_number,
-          });
-          const releaseIndicatorComment = comments.data.find(comment =>
-            comment.body.startsWith(PR_COMMENT_TITLE),
-          );
-          function getPRComment() {
-            if (!release) {
-              return `There are no relevant changes, so no new version is released.`;
-            }
-            return `${process.env.RELEASES_NOTES}`;
-          }
-          const body = PR_COMMENT_TITLE + getPRComment();
-          if (releaseIndicatorComment) {
-            await github.issues.updateComment({
+          CHANGELOG=$(cat $PWD/PR_CHANGELOG.md)
+          CHANGELOG="${CHANGELOG//'%'/'%25'}"
+          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+
+          echo "::set-output name=releases::$(cat ${PWD}/VERSIONS.json | jq '.[] | del(.changelog_path)' | jq -sc)"
+          echo "::set-output name=release_required::$(cat ${PWD}/VERSIONS.json | jq '. | length')"
+          echo "::set-output name=full_changelog::${CHANGELOG}"
+
+          rm -rf $PWD/PR_CHANGELOG.md
+          rm -rf $PWD/VERSIONS.json
+
+      - name: "release indicator - comment pr"
+        uses: actions/github-script@v3
+        if: "!contains(github.ref, 'main')"
+        env:
+          RELEASES: ${{ steps.release-indicator.outputs.releases }}
+          RELEASES_NOTES: ${{ steps.release-indicator.outputs.full_changelog }}
+          RELEASE_REQUIRED: ${{ steps.release-indicator.outputs.release_required }}
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const PR_COMMENT_TITLE = '## :package: Release indicator\n\n';
+            const release = process.env.RELEASE_REQUIRED;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.issues.listComments({
               owner,
               repo,
-              body,
-              comment_id: releaseIndicatorComment.id,
+              issue_number,
             });
-          } else {
-            await github.issues.createComment({ owner, repo, issue_number, body });
-          }
-          
+            const releaseIndicatorComment = comments.data.find(comment =>
+              comment.body.startsWith(PR_COMMENT_TITLE),
+            );
+            function getPRComment() {
+              if (!release) {
+                return `There are no relevant changes, so no new version is released.`;
+              }
+              return `${process.env.RELEASES_NOTES}`;
+            }
+            const body = PR_COMMENT_TITLE + getPRComment();
+            if (releaseIndicatorComment) {
+              await github.issues.updateComment({
+                owner,
+                repo,
+                body,
+                comment_id: releaseIndicatorComment.id,
+              });
+            } else {
+              await github.issues.createComment({ owner, repo, issue_number, body });
+            }
+
   build:
-    needs: [ 'general' ]
+    needs: ["general"]
     if: ${{ needs.general.outputs.athena == 'true' && !contains(toJSON(github.event.commits.*.message), '[skip ci]') }}
     name: Build .NET App
     runs-on: ubuntu-20.04
     env:
       PR_ID: ${{ needs.general.outputs.pr_id }}
     steps:
-    - name: Check out the repo
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0 
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Setup .NETCore 3.1
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '3.1.x'
+      - name: Setup .NET6
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "6.0.x"
 
-    - name: Build Artifact
-      run: dotnet publish src/Athena.csproj -c Debug -o ./app/publish --version-suffix "-${PR_ID}"
+      - name: Build Artifact
+        run: dotnet publish src/Athena.csproj -c Debug -o ./app/publish --version-suffix "-${PR_ID}"
 
-    - name: Publish Build Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: build-artifact
-        path: ./app/publish
-        retention-days: 2
+      - name: Publish Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact
+          path: ./app/publish
+          retention-days: 2
 
   docker:
-    needs: [ 'general' ]
+    needs: ["general"]
     if: ${{ needs.general.outputs.athena == 'true' && !contains(toJSON(github.event.commits.*.message), '[skip ci]') }}
     name: Build Docker Image
     runs-on: ubuntu-20.04
     env:
       PR_ID: ${{ needs.general.outputs.pr_id }}
     steps:
-    - name: Check out the repo
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    - name: Login to DockerHub
-      uses: docker/login-action@v1 
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-    - name: Docker meta
-      id: docker_meta
-      uses: crazy-max/ghaction-docker-meta@v1
-      with:
-        images: alexismtr/athena
-    - name: Build and push
-      id: docker_build
-      uses: docker/build-push-action@v2
-      with:
-        context: ./src
-        file: ./src/Dockerfile
-        push: true
-        tags: ${{ steps.docker_meta.outputs.tags }}
-    - name: Image Info
-      run: |
-        echo "TAG(s): ${{ steps.docker_meta.outputs.tags }}"
-        echo "DIGEST: ${{ steps.docker_build.outputs.digest }}"
-
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Docker meta
+        id: docker_meta
+        uses: crazy-max/ghaction-docker-meta@v1
+        with:
+          images: alexismtr/athena
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: ./src
+          file: ./src/Dockerfile
+          push: true
+          tags: ${{ steps.docker_meta.outputs.tags }}
+      - name: Image Info
+        run: |
+          echo "TAG(s): ${{ steps.docker_meta.outputs.tags }}"
+          echo "DIGEST: ${{ steps.docker_build.outputs.digest }}"
 
   helm_checks:
-    needs: [ 'general', 'docker' ]
+    needs: ["general", "docker"]
     if: ${{ needs.general.outputs.helm == 'true' || needs.general.outputs.athena == 'true' && !contains(toJSON(github.event.commits.*.message), '[skip ci]') }}
     name: Helm Test
     runs-on: ubuntu-20.04
@@ -253,39 +257,39 @@ jobs:
     strategy:
       matrix:
         k8s:
-        - v1.16.15
-        - v1.17.17
-        - v1.18.15
-        - v1.19.7
-        - v1.20.2
+          - v1.16.15
+          - v1.17.17
+          - v1.18.15
+          - v1.19.7
+          - v1.20.2
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-      
-    - name: Change chart version
-      run: |
-        sed -Ei "s/^version:\s?([0-9\.]+)/version: \1-${PR_ID}/" helm/athena/Chart.yaml
-        sed -Ei "s/^appVersion:\s?([0-9\.]+)/appVersion: ${PR_ID}/" helm/athena/Chart.yaml
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Run kubeval on ${{ matrix.k8s }}
-      env:
-        KUBERNETES_VERSION: ${{ matrix.k8s }}
-        CHART_DIR: ./helm/athena
-      run: |
-        set -euo pipefail
+      - name: Change chart version
+        run: |
+          sed -Ei "s/^version:\s?([0-9\.]+)/version: \1-${PR_ID}/" helm/athena/Chart.yaml
+          sed -Ei "s/^appVersion:\s?([0-9\.]+)/appVersion: ${PR_ID}/" helm/athena/Chart.yaml
 
-        KUBEVAL_VERSION="0.15.0"
-        SCHEMA_LOCATION="https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/"
-        KUBEVAL_SRC=$(echo "https://github.com/instrumenta/kubeval/releases/download/${KUBEVAL_VERSION}/kubeval-linux-amd64.tar.gz")
-        # install kubeval
-        curl --silent --show-error --fail --location --output /tmp/kubeval.tar.gz $KUBEVAL_SRC
-        tar -xf /tmp/kubeval.tar.gz kubeval
+      - name: Run kubeval on ${{ matrix.k8s }}
+        env:
+          KUBERNETES_VERSION: ${{ matrix.k8s }}
+          CHART_DIR: ./helm/athena
+        run: |
+          set -euo pipefail
 
-        helm template $CHART_DIR | ./kubeval --strict \
-          --ignore-missing-schemas --kubernetes-version "${KUBERNETES_VERSION#v}" \
-          --schema-location "${SCHEMA_LOCATION}"
+          KUBEVAL_VERSION="0.15.0"
+          SCHEMA_LOCATION="https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/"
+          KUBEVAL_SRC=$(echo "https://github.com/instrumenta/kubeval/releases/download/${KUBEVAL_VERSION}/kubeval-linux-amd64.tar.gz")
+          # install kubeval
+          curl --silent --show-error --fail --location --output /tmp/kubeval.tar.gz $KUBEVAL_SRC
+          tar -xf /tmp/kubeval.tar.gz kubeval
+
+          helm template $CHART_DIR | ./kubeval --strict \
+            --ignore-missing-schemas --kubernetes-version "${KUBERNETES_VERSION#v}" \
+            --schema-location "${SCHEMA_LOCATION}"
 
     # - name: Create kind ${{ matrix.k8s }} cluster
     #   uses: helm/kind-action@master
@@ -296,41 +300,41 @@ jobs:
     #   with:
     #     command: install
     #     config: .github/ct.yaml
-        
+
   helm_package:
-    needs: [ 'general', 'helm_checks' ]
+    needs: ["general", "helm_checks"]
     if: ${{ needs.general.outputs.helm == 'true' || needs.general.outputs.athena == 'true' && !contains(toJSON(github.event.commits.*.message), '[skip ci]') }}
     name: Helm Package
     runs-on: ubuntu-20.04
     env:
       PR_ID: ${{ needs.general.outputs.pr_id }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Helm template / Package
-      run: |
-        sed -Ei "s/^version:\s?([0-9\.]+)/version: \1-${PR_ID}/" helm/athena/Chart.yaml
-        sed -Ei "s/^appVersion:\s?([0-9\.]+)/appVersion: ${PR_ID}/" helm/athena/Chart.yaml
-        
-        cd ./helm/athena
-        mkdir -p artifacts
+      - name: Helm template / Package
+        run: |
+          sed -Ei "s/^version:\s?([0-9\.]+)/version: \1-${PR_ID}/" helm/athena/Chart.yaml
+          sed -Ei "s/^appVersion:\s?([0-9\.]+)/appVersion: ${PR_ID}/" helm/athena/Chart.yaml
 
-        echo "Run dependency update ..."
-        helm dependency update
+          cd ./helm/athena
+          mkdir -p artifacts
 
-        echo "Template chart ..."
-        helm template athena . --namespace kind-kind -f values.yaml \
-          --set image.tag=$PR_ID | tee ./artifacts/athena-$PR_ID.yaml
+          echo "Run dependency update ..."
+          helm dependency update
 
-        echo "Package chart ..."
-        helm package . -d ./artifacts/
+          echo "Template chart ..."
+          helm template athena . --namespace kind-kind -f values.yaml \
+            --set image.tag=$PR_ID | tee ./artifacts/athena-$PR_ID.yaml
 
-    - name: Publish Build Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: chart-artifact
-        path: ./helm/athena/artifacts
-        retention-days: 2
+          echo "Package chart ..."
+          helm package . -d ./artifacts/
+
+      - name: Publish Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: chart-artifact
+          path: ./helm/athena/artifacts
+          retention-days: 2

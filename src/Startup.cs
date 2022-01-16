@@ -1,5 +1,4 @@
 ﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using AutoMapper;
 using Athena.Configuration.MapperProfiles;
 using Microsoft.Extensions.DependencyInjection;
 using Athena.Configuration;

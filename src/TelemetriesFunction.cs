@@ -12,10 +12,11 @@ using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 using AutoMapper;
 using Azure.Messaging.EventHubs;
+using Dapr.AzureFunctions.Extension;
+using CloudNative.CloudEvents;
 
 namespace Athena
 {
@@ -103,6 +104,31 @@ namespace Athena
             if (exceptions.Count == 1)
                 throw exceptions.Single();
         }
+
+        [FunctionName("DaprEvent")]
+        public async Task RunDapr(
+            [DaprTopicTrigger(pubSubName: "%subComponentName%", Topic = "%EventSubscribe%")] CloudEvent cloudEvent,
+            [DaprPublish(PubSubName = "%pubComponentName%", Topic = "%EventPublish%")] IAsyncCollector<DaprPubSubEvent> outputEvents)
+        {
+            TelemetriesSetDto payload = JsonConvert.DeserializeObject<TelemetriesSetDto>(cloudEvent.Data.ToString());
+
+            try
+            {
+                TelemetryDispatchDto data = Process(payload.DeviceId, payload);
+
+                await outputEvents.AddAsync(new DaprPubSubEvent(JsonConvert.SerializeObject(data)));
+
+                if (data.Configuration != null && !data.Configuration.IsPublished)
+                {
+                    // TODO: forward configuration to sender
+                }
+            }
+            catch (Exception e)
+            {
+                log.LogError(e, "An error occured on processing telemetries");
+            }
+        }
+
 
         private TelemetryDispatchDto Process(string deviceId, TelemetriesSetDto data)
         {

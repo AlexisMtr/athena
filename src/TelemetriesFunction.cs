@@ -11,11 +11,11 @@ using System;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.Azure.EventHubs;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using AutoMapper;
+using Azure.Messaging.EventHubs;
 
 namespace Athena
 {
@@ -51,7 +51,7 @@ namespace Athena
                 TelemetryDispatchDto data = Process(payload.DeviceId, payload);
 
                 IActionResult result = data.Configuration.IsPublished ?
-                    new StatusCodeResult((int)HttpStatusCode.NotModified) as IActionResult :
+                    new StatusCodeResult((int)HttpStatusCode.NotModified) :
                     new OkObjectResult(new { publicationDelay = data.Configuration.PublicationDelay });
 
                 await outputEvents.AddAsync(JsonConvert.SerializeObject(data));
@@ -80,7 +80,7 @@ namespace Athena
             {
                 try
                 {
-                    string requestBody = Encoding.UTF8.GetString(eventData.Body.Array, eventData.Body.Offset, eventData.Body.Count);
+                    string requestBody = eventData.EventBody.ToString();
                     TelemetriesSetDto payload = JsonConvert.DeserializeObject<TelemetriesSetDto>(requestBody);
 
                     TelemetryDispatchDto data = Process(payload.DeviceId, payload);

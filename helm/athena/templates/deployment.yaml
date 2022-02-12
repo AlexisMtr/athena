@@ -60,11 +60,6 @@ spec:
             secretKeyRef:
               name: {{ $azSecretRef }}
               key: AZ_STORAGE
-        - name: AzureWebJobsDashboard
-          valueFrom:
-            secretKeyRef:
-              name: {{ $azSecretRef }}
-              key: AZ_STORAGE
         - name: ConnectionStrings__DefaultConnection
           valueFrom:
             secretKeyRef:

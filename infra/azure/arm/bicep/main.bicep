@@ -4,18 +4,18 @@ param releaseName string = 'athena'
 @secure()
 param databaseConnectionString string
 
-@description('ConnectionString to EventHub/Kafka broker to listen on. Put the secretUri if you want to use KeyVault')
+@description('ConnectionString to EventHub to listen on. Put the secretUri if you want to use KeyVault')
 @secure()
 param eventSubscribeConnectionString string
 
 @description('EventHub/Kafka topic to listen on')
 param eventSubscribeTopic string
 
-@description('ConnectionString to EventHub/Kafka broker to publish on. Put the secretUri if you want to use KeyVault')
+@description('ConnectionString to EventHub to publish on. Put the secretUri if you want to use KeyVault')
 @secure()
 param eventPublishConnectionString string
 
-@description('EventHub/Kafka topic to publish on')
+@description('EventHub topic to publish on')
 param eventPublishTopic string
 
 @description('ApplicationInsigth Instrumentation Key. If not provided, the template will create a new AppInsights resource')

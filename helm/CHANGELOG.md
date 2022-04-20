@@ -1,3 +1,22 @@
+# [helm-chart-v2.0.0](https://github.com/AlexisMtr/athena/compare/helm-chart-v1.1.1...helm-chart-v2.0.0) (2022-04-20)
+
+
+### chore
+
+* **helm:** use ingress v1 ([7b702d8](https://github.com/AlexisMtr/athena/commit/7b702d8b7db536b5bd5220b3332ebd1f92261730))
+
+
+### Features
+
+* **athena:** bump appVersion to 1.1.0 ([728ce3a](https://github.com/AlexisMtr/athena/commit/728ce3a2f175cfda0d36779e9d9785da3e410473))
+* **helm:** add support for DAPR ([5a1db97](https://github.com/AlexisMtr/athena/commit/5a1db97899cfd0fe8c12f96becc363926884c2b2))
+
+
+### BREAKING CHANGES
+
+* **helm:** drop support for ingress v1beta1 (require k8s 1.19+)
+* **helm:** values structure has changed
+
 # [helm-chart-v1.1.1](https://github.com/AlexisMtr/athena/compare/helm-chart-v1.1.0...helm-chart-v1.1.1) (2021-02-27)
 
 

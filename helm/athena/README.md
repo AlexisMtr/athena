@@ -1,7 +1,7 @@
  
 # athena
 
-![Version: 1.1.1](https://img.shields.io/badge/Version-1.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.0](https://img.shields.io/badge/AppVersion-1.0.0-informational?style=flat-square)
+![Version: 2.0.0](https://img.shields.io/badge/Version-2.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.0](https://img.shields.io/badge/AppVersion-1.1.0-informational?style=flat-square)
 
 API component of Poseidon project
 
@@ -12,7 +12,7 @@ To install the chart with the release name `my-release`:
 ```console
 $ helm repo add poseidon https://alexismtr.github.io/poseidon-helm-chart
 $ helm repo update
-$ helm install my-release poseidon/athena --version 1.1.1
+$ helm install my-release poseidon/athena --version 2.0.0
 ```
 
 ## Values
@@ -24,16 +24,30 @@ $ helm install my-release poseidon/athena --version 1.1.1
 | autoscaling.maxReplicas | int | `100` |  |
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
-| environments.environment | string | `"Development"` |  |
-| environments.eventPublishTopic | string | `nil` |  |
-| environments.eventSubcribeTopic | string | `nil` |  |
-| environments.faExtensionVersion | string | `"~3"` |  |
-| environments.faRuntime | string | `"dotnet"` |  |
-| environmentsSecret.connectionStrings.azStorage | string | `nil` |  |
-| environmentsSecret.connectionStrings.publishBroker | string | `nil` |  |
-| environmentsSecret.connectionStrings.sqlServer | string | `nil` |  |
-| environmentsSecret.connectionStrings.subscribeBroker | string | `nil` |  |
-| existingEnvSecret | string | `nil` | use existing secret to set environment secret variable |
+| configuration.azFunction.environment | string | `"Development"` |  |
+| configuration.azFunction.extensionVersion | string | `"~4"` |  |
+| configuration.azFunction.functions | object | `{"DaprEvent":{"disabled":true},"TelemetriesEvent":{"disabled":true},"TelemetriesHttp":{"disabled":true}}` | enable / disable function at runtime |
+| configuration.azFunction.runtime | string | `"dotnet"` |  |
+| configuration.azFunction.storageAccount.connectionString | string | `""` | set AZ_STORAGE key in the default secret |
+| configuration.azFunction.storageAccount.secretRef | string | `nil` | use an already defined secret with AZ_STORAGE key |
+| configuration.pubSub.brokers.publish.connectionString | string | `""` | set EVT_PUB_CONNECTION_STRING key in the default secret |
+| configuration.pubSub.brokers.publish.secretRef | string | `nil` | use an already defined secret with EVT_PUB_CONNECTION_STRING key |
+| configuration.pubSub.brokers.subscribe.connectionString | string | `""` | set EVT_SUB_CONNECTION_STRING key in the default secret |
+| configuration.pubSub.brokers.subscribe.secretRef | string | `nil` | use an already defined secret with EVT_SUB_CONNECTION_STRING key |
+| configuration.pubSub.dapr.pubComponentName | string | `""` |  |
+| configuration.pubSub.dapr.subComponentName | string | `""` |  |
+| configuration.pubSub.topics.publish | string | `""` |  |
+| configuration.pubSub.topics.subscribe | string | `""` |  |
+| configuration.sqlServer.connectionString | string | `""` | set DB_CONNECTION_STRING key in the default secret |
+| configuration.sqlServer.secretRef | string | `nil` | use an already defined secret with DB_CONNECTION_STRING key |
+| dapr.app.port | int | `3001` |  |
+| dapr.components | string | `nil` |  |
+| dapr.enabled | bool | `true` |  |
+| dapr.extraAnnotations | string | `nil` |  |
+| dapr.log.json | bool | `false` |  |
+| dapr.log.level | string | `"info"` |  |
+| dapr.metrics.port | int | `9090` |  |
+| extraEnv | list | `[]` |  |
 | fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"alexismtr/athena"` |  |

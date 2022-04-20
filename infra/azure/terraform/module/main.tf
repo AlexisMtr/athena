@@ -34,14 +34,17 @@ resource "azurerm_function_app" "athena" {
   os_type                    = "linux"
 
   app_settings = {
-    FUNCTIONS_WORKER_RUNTIME       = "dotnet"
-    FUNCTIONS_EXTENSION_VERSION    = "~2"
-    WEBSITE_RUN_FROM_PACKAGE       = var.athena_package_source
-    APPINSIGHTS_INSTRUMENTATIONKEY = var.create_app_insights ? azurerm_application_insights.athena[0].instrumentation_key : var.app_insight_instrumentation_key
-    EventPublishConnectionString   = var.event_publish_connection_string
-    EventPublishTopic              = var.event_publish_topic
-    EventSubscribeConnectionString = var.event_subscribe_connection_string
-    EventSubscribeTopic            = var.event_subscribe_topic
+    FUNCTIONS_WORKER_RUNTIME               = "dotnet"
+    FUNCTIONS_EXTENSION_VERSION            = "~4"
+    WEBSITE_RUN_FROM_PACKAGE               = var.athena_package_source
+    APPINSIGHTS_INSTRUMENTATIONKEY         = var.create_app_insights ? azurerm_application_insights.athena[0].instrumentation_key : var.app_insight_instrumentation_key
+    EventPublishConnectionString           = var.event_publish_connection_string
+    EventPublishTopic                      = var.event_publish_topic
+    EventSubscribeConnectionString         = var.event_subscribe_connection_string
+    EventSubscribeTopic                    = var.event_subscribe_topic
+    AzureWebJobs.TelemetriesHttp.Disabled  = var.disable_http_trigger
+    AzureWebJobs.TelemetriesEvent.Disabled = var.disable_eventhub_trigger
+    AzureWebJobs.DaprEvent.Disabled        = "true"
   }
 
   connection_string {

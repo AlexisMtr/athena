@@ -26,7 +26,7 @@ variable "create_app_insights" {
 
 variable "event_subscribe_connection_string" {
   type        = string
-  description = "ConnectionString to EventHub/Kafka broker to listen on (use KV notation to use secret on KV)"
+  description = "ConnectionString to EventHub to listen on (use KV notation to use secret on KV)"
 }
 
 variable "event_subscribe_topic" {
@@ -36,12 +36,12 @@ variable "event_subscribe_topic" {
 
 variable "event_publish_connection_string" {
   type        = string
-  description = "ConnectionString to EventHub/Kafka broker to publish on (use KV notation to use secret on KV)"
+  description = "ConnectionString to EventHub to publish on (use KV notation to use secret on KV)"
 }
 
 variable "event_publish_topic" {
   type        = string
-  description = "EventHub/Kafka topic to publish on"
+  description = "EventHub topic to publish on"
 }
 
 variable "db_connection_string" {
@@ -52,4 +52,16 @@ variable "db_connection_string" {
 variable "athena_package_source" {
   type        = string
   description = "URI of the Athena Package available on Internet"
+}
+
+variable "disable_http_trigger" {
+  type        = bool
+  default     = false
+  description = "Disable HTTP Trigger"
+}
+
+variable "disable_eventhub_trigger" {
+  type        = bool
+  default     = false
+  description = "Disable Eventhub Trigger"
 }

@@ -44,6 +44,8 @@ namespace Athena
             builder.Services.AddScoped<DeviceConfigurationService>();
             builder.Services.AddScoped<ProcessDataService>();
 
+            builder.Services.AddScoped<IDeviceForwarder, EmptyDeviceForwarder>();
+
             builder.Services.AddAutoMapper(conf =>
             {
                 conf.AddProfile<TelemetryProfile>();

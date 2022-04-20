@@ -24,21 +24,26 @@ namespace Athena
     {
         private readonly ProcessDataService dataService;
         private readonly DeviceConfigurationService deviceConfigurationService;
+        private readonly IDeviceForwarder deviceForwardService;
         private readonly IMapper mapper;
         private readonly ILogger<TelemetriesFunction> log;
 
-        public TelemetriesFunction(ProcessDataService dataService, DeviceConfigurationService deviceConfigurationService, IMapper mapper, ILogger<TelemetriesFunction> log)
+        public TelemetriesFunction(
+            ProcessDataService dataService,
+            DeviceConfigurationService deviceConfigurationService,
+            IDeviceForwarder deviceForwardService,
+            IMapper mapper, ILogger<TelemetriesFunction> log)
         {
             this.dataService = dataService;
             this.deviceConfigurationService = deviceConfigurationService;
+            this.deviceForwardService = deviceForwardService;
             this.mapper = mapper;
             this.log = log;
         }
 
         [FunctionName("TelemetriesHttp")]
         public async Task<IActionResult> RunHttp(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "telemetries")] HttpRequest req,
-            [EventHub("%EventPublish%", Connection = "EventPublishConnectionString")] IAsyncCollector<string> outputEvents)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "telemetries")] HttpRequest req)
         {
             string requestBody = string.Empty;
             using (var sr = new StreamReader(req.Body))
@@ -54,8 +59,6 @@ namespace Athena
                 IActionResult result = data.Configuration.IsPublished ?
                     new StatusCodeResult((int)HttpStatusCode.NotModified) :
                     new OkObjectResult(new { publicationDelay = data.Configuration.PublicationDelay });
-
-                await outputEvents.AddAsync(JsonConvert.SerializeObject(data));
 
                 return result;
             }
@@ -87,10 +90,7 @@ namespace Athena
                     TelemetryDispatchDto data = Process(payload.DeviceId, payload);
                     await outputEvents.AddAsync(JsonConvert.SerializeObject(data));
 
-                    if (data.Configuration != null && !data.Configuration.IsPublished)
-                    {
-                        // TODO: forward configuration to sender
-                    }
+                    await deviceForwardService.ForwardDeviceConfiguration(mapper.Map<DeviceConfiguration>(data?.Configuration), data?.Configuration.IsPublished ?? false);
                 }
                 catch (Exception e)
                 {
@@ -118,10 +118,7 @@ namespace Athena
 
                 await outputEvents.AddAsync(new DaprPubSubEvent(JsonConvert.SerializeObject(data)));
 
-                if (data.Configuration != null && !data.Configuration.IsPublished)
-                {
-                    // TODO: forward configuration to sender
-                }
+                await deviceForwardService.ForwardDeviceConfiguration(mapper.Map<DeviceConfiguration>(data?.Configuration), data?.Configuration.IsPublished ?? false);
             }
             catch (Exception e)
             {
